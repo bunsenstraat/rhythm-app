@@ -6,6 +6,7 @@ export type NoteType = 'note' | 'rest';
 export interface Note {
   duration: NoteDuration;
   type: NoteType;
+  tie?: boolean; // Whether this note is tied to the next note
 }
 
 export interface RhythmPattern {

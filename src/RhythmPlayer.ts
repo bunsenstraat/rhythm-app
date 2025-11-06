@@ -68,11 +68,14 @@ export class RhythmPlayer {
     this.expectedTaps = [];
     let currentTime = 0;
     
-    this.pattern.notes.forEach((note) => {
+    this.pattern.notes.forEach((note, index) => {
       this.noteTimes.push(currentTime);
       
-      // Add to expected taps if it's a note (not a rest)
-      if (note.type === 'note') {
+      // Add to expected taps if it's a note (not a rest) and not tied from previous note
+      const previousNote = index > 0 ? this.pattern.notes[index - 1] : null;
+      const isTiedFromPrevious = previousNote && previousNote.tie;
+      
+      if (note.type === 'note' && !isTiedFromPrevious) {
         this.expectedTaps.push(currentTime);
       }
       
@@ -231,10 +234,15 @@ export class RhythmPlayer {
       this.audioEngine.playMetronome(beatTime, isDownbeat);
     }
     
-    // Schedule pattern sounds (only in practice mode and only on actual notes, not rests)
+    // Schedule pattern sounds (only in practice mode and only on actual notes, not rests or tied notes)
     if (this.practiceMode) {
       this.pattern.notes.forEach((note, index) => {
-        if (note.type === 'note') {
+        // Check if this note is tied from the previous note
+        const previousNote = index > 0 ? this.pattern.notes[index - 1] : null;
+        const isTiedFromPrevious = previousNote && previousNote.tie;
+        
+        // Play sound only for notes that aren't rests and aren't tied from previous
+        if (note.type === 'note' && !isTiedFromPrevious) {
           const noteTime = this.noteTimes[index];
           const beatTime = audioContextStartTime + ((countInDuration + noteTime) / 1000);
           this.audioEngine.playPattern(beatTime);

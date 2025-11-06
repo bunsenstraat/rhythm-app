@@ -14,6 +14,7 @@ export class PatternDesigner {
   private lastResults: TestResults | null = null;
   private audioEngine: AudioEngine;
   private isPlaying: boolean = false;
+  private selectedNotes: Set<number> = new Set(); // Track selected note indices
 
   constructor(
     container: HTMLElement, 
@@ -46,6 +47,38 @@ export class PatternDesigner {
         ${this.lastResults ? this.renderLastScore() : ''}
         
         <div class="sheet-music-container" id="sheet-music"></div>
+        
+        <div class="selection-controls" id="selection-controls" style="display: none;">
+          <div style="margin-bottom: 1rem;">
+            <strong>Selected: <span id="selected-count">0</span> note(s)</strong>
+            <button class="clear-selection-btn" id="clear-selection-btn">Clear Selection</button>
+          </div>
+          <div class="selection-actions">
+            <div class="action-group">
+              <label>Change Duration:</label>
+              <button class="sel-action-btn" data-action="duration" data-value="q" title="Quarter Note">Q</button>
+              <button class="sel-action-btn" data-action="duration" data-value="8" title="Eighth Note">8th</button>
+              <button class="sel-action-btn" data-action="duration" data-value="16" title="Sixteenth Note">16th</button>
+              <button class="sel-action-btn" data-action="duration" data-value="h" title="Half Note">H</button>
+              <button class="sel-action-btn" data-action="duration" data-value="w" title="Whole Note">W</button>
+              <button class="sel-action-btn" data-action="duration" data-value="q3" title="Quarter Triplet">Q3</button>
+              <button class="sel-action-btn" data-action="duration" data-value="83" title="Eighth Triplet">8th3</button>
+            </div>
+            <div class="action-group">
+              <label>Change Type:</label>
+              <button class="sel-action-btn" data-action="type" data-value="note">Note</button>
+              <button class="sel-action-btn" data-action="type" data-value="rest">Rest</button>
+            </div>
+            <div class="action-group">
+              <label>Tie:</label>
+              <button class="sel-action-btn" data-action="tie" data-value="add" title="Add tie to next note">Add Tie</button>
+              <button class="sel-action-btn" data-action="tie" data-value="remove" title="Remove tie">Remove Tie</button>
+            </div>
+            <div class="action-group">
+              <button class="sel-action-btn danger" data-action="delete">Delete Selected</button>
+            </div>
+          </div>
+        </div>
         
         <div class="rhythm-editor">
           <div class="note-palette">
@@ -122,24 +155,28 @@ export class PatternDesigner {
     };
 
     const noteSymbols: Record<string, string> = {
-      'w': '𝅝',      // whole note
-      'h': '𝅗𝅥',      // half note
-      'q': '♩',      // quarter note
-      '8': '♪',      // eighth note
-      '16': '𝅘𝅥𝅯',    // sixteenth note
-      'q3': '♩³',    // quarter triplet
-      '83': '♪³'     // eighth triplet
+      'w': 'W',
+      'h': 'H',
+      'q': 'Q',
+      '8': '8th',
+      '16': '16th',
+      'q3': 'Q3',
+      '83': '8th3'
     };
 
-    const restSymbol = '𝄽';  // quarter rest symbol
+    const restSymbol = 'R';
 
-    return this.pattern.notes.map((note, index) => `
-      <div class="note-item" data-index="${index}">
+    return this.pattern.notes.map((note, index) => {
+      const isSelected = this.selectedNotes.has(index);
+      const tieIndicator = note.tie ? '<span class="tie-indicator">~</span>' : '';
+      return `
+      <div class="note-item ${isSelected ? 'selected' : ''}" data-index="${index}">
         <button class="delete-note-btn" data-index="${index}">×</button>
-        <div class="note-symbol">${note.type === 'rest' ? restSymbol : noteSymbols[note.duration]}</div>
+        <div class="note-symbol">${note.type === 'rest' ? restSymbol : noteSymbols[note.duration]}${tieIndicator}</div>
         <span class="note-label">${noteNames[note.duration]}<br>${note.type === 'rest' ? 'Rest' : 'Note'}</span>
       </div>
-    `).join('');
+    `;
+    }).join('');
   }
 
   private renderLastScore(): string {
@@ -203,14 +240,71 @@ export class PatternDesigner {
       this.updateDisplay();
     });
 
+    // Note item click for selection (with multi-select support)
+    const noteItems = this.container.querySelectorAll('.note-item');
+    noteItems.forEach(item => {
+      item.addEventListener('click', (e) => {
+        // Don't trigger selection if clicking the delete button
+        if ((e.target as HTMLElement).classList.contains('delete-note-btn')) {
+          return;
+        }
+        
+        const index = parseInt((item as HTMLElement).dataset.index!);
+        const isShiftKey = (e as MouseEvent).shiftKey;
+        const isMetaOrCtrl = (e as MouseEvent).metaKey || (e as MouseEvent).ctrlKey;
+        
+        if (isMetaOrCtrl) {
+          // Toggle individual selection
+          if (this.selectedNotes.has(index)) {
+            this.selectedNotes.delete(index);
+          } else {
+            this.selectedNotes.add(index);
+          }
+        } else if (isShiftKey && this.selectedNotes.size > 0) {
+          // Range select from last selected to current
+          const indices = Array.from(this.selectedNotes);
+          const lastSelected = Math.max(...indices);
+          const start = Math.min(lastSelected, index);
+          const end = Math.max(lastSelected, index);
+          for (let i = start; i <= end; i++) {
+            this.selectedNotes.add(i);
+          }
+        } else {
+          // Single select (clear others)
+          this.selectedNotes.clear();
+          this.selectedNotes.add(index);
+        }
+        
+        this.updateSelectionDisplay();
+      });
+    });
+    
     // Delete note buttons
     const deleteButtons = this.container.querySelectorAll('.delete-note-btn');
     deleteButtons.forEach(btn => {
       btn.addEventListener('click', (e) => {
+        e.stopPropagation(); // Prevent triggering note selection
         const index = parseInt((e.currentTarget as HTMLElement).dataset.index!);
         this.pattern.notes.splice(index, 1);
+        this.selectedNotes.clear();
         this.updateDisplay();
       });
+    });
+    
+    // Selection action buttons
+    const selActionButtons = this.container.querySelectorAll('.sel-action-btn');
+    selActionButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const action = (btn as HTMLElement).dataset.action!;
+        const value = (btn as HTMLElement).dataset.value;
+        this.applySelectionAction(action, value);
+      });
+    });
+    
+    // Clear selection button
+    this.container.querySelector('#clear-selection-btn')?.addEventListener('click', () => {
+      this.selectedNotes.clear();
+      this.updateSelectionDisplay();
     });
 
     // Beats slider
@@ -241,6 +335,99 @@ export class PatternDesigner {
       duration: this.selectedDuration,
       type: this.selectedType
     });
+    this.updateDisplay();
+  }
+  
+  private updateSelectionDisplay() {
+    // Update selected visual state on note items
+    const noteItems = this.container.querySelectorAll('.note-item');
+    noteItems.forEach((item, index) => {
+      if (this.selectedNotes.has(index)) {
+        item.classList.add('selected');
+      } else {
+        item.classList.remove('selected');
+      }
+    });
+    
+    // Update selection controls visibility and count
+    const selectionControls = this.container.querySelector('#selection-controls') as HTMLElement;
+    const selectedCount = this.container.querySelector('#selected-count') as HTMLElement;
+    
+    if (selectionControls) {
+      if (this.selectedNotes.size > 0) {
+        selectionControls.style.display = 'block';
+        if (selectedCount) {
+          selectedCount.textContent = this.selectedNotes.size.toString();
+        }
+      } else {
+        selectionControls.style.display = 'none';
+      }
+    }
+    
+    // Also highlight in sheet music if possible
+    this.updateSheetMusicSelection();
+  }
+  
+  private updateSheetMusicSelection() {
+    // Highlight selected notes in sheet music
+    const noteElements = this.container.querySelectorAll('.abcjs-note');
+    noteElements.forEach((el, index) => {
+      if (this.selectedNotes.has(index)) {
+        el.classList.add('abcjs-highlight');
+      } else {
+        el.classList.remove('abcjs-highlight');
+      }
+    });
+  }
+  
+  private applySelectionAction(action: string, value?: string) {
+    if (this.selectedNotes.size === 0) return;
+    
+    const indices = Array.from(this.selectedNotes).sort((a, b) => a - b);
+    
+    switch (action) {
+      case 'duration':
+        if (value) {
+          indices.forEach(index => {
+            this.pattern.notes[index].duration = value as NoteDuration;
+          });
+        }
+        break;
+        
+      case 'type':
+        if (value) {
+          indices.forEach(index => {
+            this.pattern.notes[index].type = value as NoteType;
+          });
+        }
+        break;
+        
+      case 'tie':
+        if (value === 'add') {
+          // Add tie to each selected note (ties to next note)
+          indices.forEach(index => {
+            // Can't tie the last note or a rest
+            if (index < this.pattern.notes.length - 1 && this.pattern.notes[index].type === 'note') {
+              this.pattern.notes[index].tie = true;
+            }
+          });
+        } else if (value === 'remove') {
+          // Remove tie from selected notes
+          indices.forEach(index => {
+            this.pattern.notes[index].tie = false;
+          });
+        }
+        break;
+        
+      case 'delete':
+        // Delete in reverse order to maintain indices
+        indices.reverse().forEach(index => {
+          this.pattern.notes.splice(index, 1);
+        });
+        this.selectedNotes.clear();
+        break;
+    }
+    
     this.updateDisplay();
   }
 
@@ -307,9 +494,14 @@ export class PatternDesigner {
       this.audioEngine.playMetronome(beatTime, isDownbeat);
     }
 
-    // Schedule pattern notes (after count-in)
+    // Schedule pattern notes (after count-in, skip tied notes)
     this.pattern.notes.forEach((note, index) => {
-      if (note.type === 'note') {
+      // Check if this note is tied from the previous note
+      const previousNote = index > 0 ? this.pattern.notes[index - 1] : null;
+      const isTiedFromPrevious = previousNote && previousNote.tie;
+      
+      // Play sound only for notes that aren't rests and aren't tied from previous
+      if (note.type === 'note' && !isTiedFromPrevious) {
         const beatTime = audioStartTime + ((countInDuration + noteTimes[index]) / 1000);
         this.audioEngine.playPattern(beatTime);
       }
@@ -385,22 +577,69 @@ export class PatternDesigner {
   private updateDisplay() {
     document.getElementById('beats-value')!.textContent = this.pattern.beatsPerBar.toString();
     
+    // Clean up invalid selections (notes that were deleted)
+    const validIndices = new Set<number>();
+    this.selectedNotes.forEach(index => {
+      if (index < this.pattern.notes.length) {
+        validIndices.add(index);
+      }
+    });
+    this.selectedNotes = validIndices;
+    
     const notesList = this.container.querySelector('#notes-list');
     if (notesList) {
       notesList.innerHTML = this.renderNotesList();
+      
+      // Reattach note item click listeners
+      const noteItems = notesList.querySelectorAll('.note-item');
+      noteItems.forEach(item => {
+        item.addEventListener('click', (e) => {
+          if ((e.target as HTMLElement).classList.contains('delete-note-btn')) {
+            return;
+          }
+          
+          const index = parseInt((item as HTMLElement).dataset.index!);
+          const isShiftKey = (e as MouseEvent).shiftKey;
+          const isMetaOrCtrl = (e as MouseEvent).metaKey || (e as MouseEvent).ctrlKey;
+          
+          if (isMetaOrCtrl) {
+            if (this.selectedNotes.has(index)) {
+              this.selectedNotes.delete(index);
+            } else {
+              this.selectedNotes.add(index);
+            }
+          } else if (isShiftKey && this.selectedNotes.size > 0) {
+            const indices = Array.from(this.selectedNotes);
+            const lastSelected = Math.max(...indices);
+            const start = Math.min(lastSelected, index);
+            const end = Math.max(lastSelected, index);
+            for (let i = start; i <= end; i++) {
+              this.selectedNotes.add(i);
+            }
+          } else {
+            this.selectedNotes.clear();
+            this.selectedNotes.add(index);
+          }
+          
+          this.updateSelectionDisplay();
+        });
+      });
       
       // Reattach delete listeners
       const deleteButtons = notesList.querySelectorAll('.delete-note-btn');
       deleteButtons.forEach(btn => {
         btn.addEventListener('click', (e) => {
+          e.stopPropagation();
           const index = parseInt((e.currentTarget as HTMLElement).dataset.index!);
           this.pattern.notes.splice(index, 1);
+          this.selectedNotes.clear();
           this.updateDisplay();
         });
       });
     }
     
     this.renderSheetMusic();
+    this.updateSelectionDisplay();
     this.onPatternChange(this.pattern);
   }
 
@@ -410,9 +649,43 @@ export class PatternDesigner {
       if (this.sheetMusicRenderer) {
         this.sheetMusicRenderer.destroy();
       }
-      this.sheetMusicRenderer = new SheetMusicRenderer(sheetMusicContainer, this.pattern);
+      this.sheetMusicRenderer = new SheetMusicRenderer(
+        sheetMusicContainer, 
+        this.pattern,
+        (index: number, event: MouseEvent) => this.handleSheetMusicNoteClick(index, event)
+      );
       this.sheetMusicRenderer.render();
     }
+  }
+  
+  private handleSheetMusicNoteClick(index: number, event: MouseEvent) {
+    // Sync selection between sheet music and note list
+    const isMetaOrCtrl = event.metaKey || event.ctrlKey;
+    const isShiftKey = event.shiftKey;
+    
+    if (isMetaOrCtrl) {
+      // Toggle individual selection
+      if (this.selectedNotes.has(index)) {
+        this.selectedNotes.delete(index);
+      } else {
+        this.selectedNotes.add(index);
+      }
+    } else if (isShiftKey && this.selectedNotes.size > 0) {
+      // Range select
+      const indices = Array.from(this.selectedNotes);
+      const lastSelected = Math.max(...indices);
+      const start = Math.min(lastSelected, index);
+      const end = Math.max(lastSelected, index);
+      for (let i = start; i <= end; i++) {
+        this.selectedNotes.add(i);
+      }
+    } else {
+      // Single select
+      this.selectedNotes.clear();
+      this.selectedNotes.add(index);
+    }
+    
+    this.updateSelectionDisplay();
   }
 
   getPattern(): RhythmPattern {

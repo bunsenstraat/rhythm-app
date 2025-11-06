@@ -84,6 +84,13 @@ body {
 
 .abcjs-note {
   transition: fill 0.1s ease, stroke 0.1s ease;
+  cursor: pointer;
+}
+
+.abcjs-note:hover {
+  fill: #764ba2 !important;
+  stroke: #764ba2 !important;
+  opacity: 0.8;
 }
 
 /* Rhythm Editor */
@@ -149,6 +156,20 @@ body {
   position: relative;
   min-width: 80px;
   gap: 0.5rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  user-select: none;
+}
+
+.note-item:hover {
+  background: #1a4d7a;
+  transform: translateY(-2px);
+}
+
+.note-item.selected {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-bottom-color: #764ba2;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.5);
 }
 
 .note-label {
@@ -163,6 +184,14 @@ body {
 .note-symbol {
   font-size: 1.5rem;
   margin-bottom: 0.25rem;
+  font-family: 'Bravura', 'Segoe UI Symbol', 'Apple Symbols', Arial, sans-serif;
+}
+
+.tie-indicator {
+  color: #10b981;
+  font-size: 1.2rem;
+  margin-left: 0.2rem;
+  font-weight: bold;
 }
 
 .delete-note-btn {
@@ -181,6 +210,84 @@ body {
 
 .delete-note-btn:hover {
   background: #d63447;
+}
+
+/* Selection Controls */
+.selection-controls {
+  background: #16213e;
+  border: 2px solid #667eea;
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.selection-controls strong {
+  color: #667eea;
+  font-size: 1.1rem;
+}
+
+.clear-selection-btn {
+  margin-left: 1rem;
+  padding: 0.4rem 0.8rem;
+  background: #e94560;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.clear-selection-btn:hover {
+  background: #d63447;
+}
+
+.selection-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.action-group {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.action-group label {
+  font-weight: 600;
+  color: #ccc;
+  margin-right: 0.5rem;
+  min-width: 130px;
+}
+
+.sel-action-btn {
+  padding: 0.6rem 1rem;
+  background: #0f3460;
+  color: white;
+  border: 2px solid #667eea;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.9rem;
+  transition: all 0.2s ease;
+  min-width: 50px;
+}
+
+.sel-action-btn:hover {
+  background: #667eea;
+  transform: translateY(-2px);
+}
+
+.sel-action-btn.danger {
+  background: #e94560;
+  border-color: #e94560;
+}
+
+.sel-action-btn.danger:hover {
+  background: #d63447;
+  border-color: #d63447;
 }
 
 /* Editor Controls */

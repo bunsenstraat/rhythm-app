@@ -6,10 +6,12 @@ import type { RhythmPattern, Note } from './types';
 export class SheetMusicRenderer {
   private container: HTMLElement;
   private pattern: RhythmPattern;
+  private onNoteClick?: (index: number, event: MouseEvent) => void;
 
-  constructor(container: HTMLElement, pattern: RhythmPattern) {
+  constructor(container: HTMLElement, pattern: RhythmPattern, onNoteClick?: (index: number, event: MouseEvent) => void) {
     this.container = container;
     this.pattern = pattern;
+    this.onNoteClick = onNoteClick;
   }
 
   setCurrentNote(index: number) {
@@ -49,6 +51,18 @@ export class SheetMusicRenderer {
         staffwidth: 600,
         scale: 1.2
       });
+      
+      // Attach click listeners to rendered notes
+      if (this.onNoteClick) {
+        const noteElements = this.container.querySelectorAll('.abcjs-note');
+        noteElements.forEach((el, index) => {
+          el.addEventListener('click', (e) => {
+            if (this.onNoteClick) {
+              this.onNoteClick(index, e as MouseEvent);
+            }
+          });
+        });
+      }
     } catch (error) {
       console.error('Error rendering ABC:', error);
       this.container.innerHTML = '<p style="color: red;">Error rendering sheet music</p>';
@@ -106,7 +120,9 @@ export class SheetMusicRenderer {
         i += 3; // Skip the next 2 notes
       } else {
         // Regular note
-        abcNotes += this.getNoteString(note) + ' ';
+        const noteStr = this.getNoteString(note);
+        // Add tie if this note has a tie marker
+        abcNotes += noteStr + (note.tie ? '-' : '') + ' ';
         currentBarBeats += beatValues[note.duration];
         i++;
       }
