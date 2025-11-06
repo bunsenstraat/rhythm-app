@@ -21,6 +21,10 @@ body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
+  /* Prevent zoom on double-tap for iOS/iPad */
+  touch-action: manipulation;
+  -webkit-user-select: none;
+  user-select: none;
 }
 
 #app {
@@ -786,6 +790,9 @@ button {
   color: #fff;
   cursor: pointer;
   transition: all 0.3s;
+  /* Prevent zoom on double-tap for mobile */
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
 }
 
 button:hover {
@@ -972,6 +979,11 @@ button:hover {
   border: 5px solid #764ba2;
   box-shadow: 0 10px 40px rgba(102, 126, 234, 0.4);
   transition: all 0.1s;
+  /* Prevent zoom and text selection on mobile */
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-user-select: none;
+  user-select: none;
 }
 
 .tap-button:hover {
