@@ -6,19 +6,62 @@
     "bars": 2,
     "beatsPerBar": 4,
     "notes": [
-      { "duration": "8", "type": "note" },
-      { "duration": "8", "type": "rest" },
-      { "duration": "8", "type": "note" },
-      { "duration": "q", "type": "note" },
-      { "duration": "8", "type": "note" },
-      { "duration": "8", "type": "note" },
-      { "duration": "8", "type": "rest" },
-      { "duration": "8", "type": "note" },
-      { "duration": "16", "type": "note" },
-      { "duration": "16", "type": "note" },
-      { "duration": "8", "type": "note" },
-      { "duration": "q", "type": "note" },
-      { "duration": "q", "type": "note" }
+      {
+        "duration": "8",
+        "type": "note"
+      },
+      {
+        "duration": "8",
+        "type": "rest"
+      },
+      {
+        "duration": "8",
+        "type": "note"
+      },
+      {
+        "duration": "q",
+        "type": "note"
+      },
+      {
+        "duration": "8",
+        "type": "note"
+      },
+      {
+        "duration": "8",
+        "type": "note"
+      },
+      {
+        "duration": "8",
+        "type": "rest"
+      },
+      {
+        "duration": "8",
+        "type": "note"
+      },
+      {
+        "duration": "16",
+        "type": "note"
+      },
+      {
+        "duration": "16",
+        "type": "note"
+      },
+      {
+        "duration": "8",
+        "type": "note"
+      },
+      {
+        "duration": "q",
+        "type": "note"
+      },
+      {
+        "duration": "q",
+        "type": "note"
+      },
+      {
+        "duration": "8",
+        "type": "rest"
+      }
     ]
   }
 }

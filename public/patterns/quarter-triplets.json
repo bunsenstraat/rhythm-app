@@ -6,10 +6,26 @@
     "bars": 1,
     "beatsPerBar": 4,
     "notes": [
-      { "duration": "q3", "type": "note" },
-      { "duration": "q3", "type": "note" },
-      { "duration": "q3", "type": "note" },
-      { "duration": "q", "type": "note" }
+      {
+        "duration": "q3",
+        "type": "note"
+      },
+      {
+        "duration": "q3",
+        "type": "note"
+      },
+      {
+        "duration": "q3",
+        "type": "note"
+      },
+      {
+        "duration": "q",
+        "type": "note"
+      },
+      {
+        "duration": "q",
+        "type": "rest"
+      }
     ]
   }
 }

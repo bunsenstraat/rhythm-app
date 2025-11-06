@@ -6,13 +6,38 @@
     "bars": 1,
     "beatsPerBar": 4,
     "notes": [
-      { "duration": "16", "type": "note" },
-      { "duration": "16", "type": "note" },
-      { "duration": "16", "type": "note" },
-      { "duration": "16", "type": "note" },
-      { "duration": "8", "type": "note" },
-      { "duration": "q", "type": "note" },
-      { "duration": "q", "type": "note" }
+      {
+        "duration": "16",
+        "type": "note"
+      },
+      {
+        "duration": "16",
+        "type": "note"
+      },
+      {
+        "duration": "16",
+        "type": "note"
+      },
+      {
+        "duration": "16",
+        "type": "note"
+      },
+      {
+        "duration": "8",
+        "type": "note"
+      },
+      {
+        "duration": "q",
+        "type": "note"
+      },
+      {
+        "duration": "q",
+        "type": "note"
+      },
+      {
+        "duration": "8",
+        "type": "rest"
+      }
     ]
   }
 }

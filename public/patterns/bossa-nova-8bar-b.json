@@ -3,56 +3,217 @@
   "description": "8-bar bossa pattern with syncopated anticipations",
   "difficulty": "advanced",
   "pattern": {
-    "bars": 8,
+    "bars": 9,
     "beatsPerBar": 4,
     "notes": [
-      { "duration": "8", "type": "note" },
-      { "duration": "8", "type": "note", "tie": true },
-      { "duration": "8", "type": "note" },
-      { "duration": "q", "type": "note" },
-      { "duration": "8", "type": "rest" },
-      { "duration": "8", "type": "note" },
-      { "duration": "q", "type": "note" },
-      { "duration": "8", "type": "note" },
-      { "duration": "8", "type": "rest" },
-      { "duration": "q", "type": "note" },
-      { "duration": "q", "type": "note" },
-      { "duration": "8", "type": "note" },
-      { "duration": "8", "type": "note", "tie": true },
-      { "duration": "8", "type": "note" },
-      { "duration": "8", "type": "rest" },
-      { "duration": "8", "type": "note" },
-      { "duration": "q", "type": "note" },
-      { "duration": "q", "type": "note" },
-      { "duration": "8", "type": "rest" },
-      { "duration": "8", "type": "note" },
-      { "duration": "8", "type": "note" },
-      { "duration": "8", "type": "note" },
-      { "duration": "q", "type": "note" },
-      { "duration": "8", "type": "note" },
-      { "duration": "8", "type": "rest" },
-      { "duration": "q", "type": "note" },
-      { "duration": "8", "type": "note", "tie": true },
-      { "duration": "8", "type": "note" },
-      { "duration": "q", "type": "note" },
-      { "duration": "8", "type": "rest" },
-      { "duration": "8", "type": "note" },
-      { "duration": "8", "type": "note" },
-      { "duration": "8", "type": "note" },
-      { "duration": "8", "type": "rest" },
-      { "duration": "8", "type": "note" },
-      { "duration": "q", "type": "note" },
-      { "duration": "q", "type": "note" },
-      { "duration": "q", "type": "note" },
-      { "duration": "8", "type": "note", "tie": true },
-      { "duration": "8", "type": "note" },
-      { "duration": "8", "type": "note" },
-      { "duration": "8", "type": "rest" },
-      { "duration": "q", "type": "note" },
-      { "duration": "8", "type": "note" },
-      { "duration": "8", "type": "note" },
-      { "duration": "q", "type": "note" },
-      { "duration": "h", "type": "note" }
+      {
+        "duration": "8",
+        "type": "note"
+      },
+      {
+        "duration": "8",
+        "type": "note",
+        "tie": true
+      },
+      {
+        "duration": "8",
+        "type": "note"
+      },
+      {
+        "duration": "q",
+        "type": "note"
+      },
+      {
+        "duration": "8",
+        "type": "rest"
+      },
+      {
+        "duration": "8",
+        "type": "note"
+      },
+      {
+        "duration": "8",
+        "type": "rest"
+      },
+      {
+        "duration": "q",
+        "type": "note"
+      },
+      {
+        "duration": "8",
+        "type": "note"
+      },
+      {
+        "duration": "8",
+        "type": "rest"
+      },
+      {
+        "duration": "q",
+        "type": "note"
+      },
+      {
+        "duration": "q",
+        "type": "note"
+      },
+      {
+        "duration": "8",
+        "type": "note"
+      },
+      {
+        "duration": "8",
+        "type": "note",
+        "tie": true
+      },
+      {
+        "duration": "8",
+        "type": "note"
+      },
+      {
+        "duration": "8",
+        "type": "rest"
+      },
+      {
+        "duration": "8",
+        "type": "note"
+      },
+      {
+        "duration": "q",
+        "type": "note"
+      },
+      {
+        "duration": "8",
+        "type": "rest"
+      },
+      {
+        "duration": "q",
+        "type": "note"
+      },
+      {
+        "duration": "8",
+        "type": "rest"
+      },
+      {
+        "duration": "8",
+        "type": "note"
+      },
+      {
+        "duration": "8",
+        "type": "note"
+      },
+      {
+        "duration": "8",
+        "type": "note"
+      },
+      {
+        "duration": "q",
+        "type": "note"
+      },
+      {
+        "duration": "8",
+        "type": "note"
+      },
+      {
+        "duration": "8",
+        "type": "rest"
+      },
+      {
+        "duration": "q",
+        "type": "note"
+      },
+      {
+        "duration": "8",
+        "type": "note",
+        "tie": true
+      },
+      {
+        "duration": "8",
+        "type": "note"
+      },
+      {
+        "duration": "q",
+        "type": "note"
+      },
+      {
+        "duration": "8",
+        "type": "rest"
+      },
+      {
+        "duration": "8",
+        "type": "note"
+      },
+      {
+        "duration": "8",
+        "type": "note"
+      },
+      {
+        "duration": "8",
+        "type": "note"
+      },
+      {
+        "duration": "8",
+        "type": "rest"
+      },
+      {
+        "duration": "8",
+        "type": "note"
+      },
+      {
+        "duration": "q",
+        "type": "note"
+      },
+      {
+        "duration": "q",
+        "type": "note"
+      },
+      {
+        "duration": "q",
+        "type": "note"
+      },
+      {
+        "duration": "8",
+        "type": "note",
+        "tie": true
+      },
+      {
+        "duration": "8",
+        "type": "note"
+      },
+      {
+        "duration": "8",
+        "type": "note"
+      },
+      {
+        "duration": "8",
+        "type": "rest"
+      },
+      {
+        "duration": "q",
+        "type": "note"
+      },
+      {
+        "duration": "8",
+        "type": "note"
+      },
+      {
+        "duration": "8",
+        "type": "note"
+      },
+      {
+        "duration": "q",
+        "type": "note"
+      },
+      {
+        "duration": "q",
+        "type": "rest"
+      },
+      {
+        "duration": "h",
+        "type": "note"
+      },
+      {
+        "duration": "h",
+        "type": "rest"
+      }
     ]
   }
 }
