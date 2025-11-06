@@ -315,7 +315,7 @@ export class RhythmTrainerApp {
 
     // Load pattern index
     try {
-      const response = await fetch('/patterns/index.json');
+      const response = await fetch('./patterns/index.json');
       const data = await response.json();
       const patterns = data.patterns || [];
       this.renderLibraryPatterns(patterns, 'all');
@@ -369,7 +369,7 @@ export class RhythmTrainerApp {
 
   private async loadPatternFromLibrary(file: string) {
     try {
-      const response = await fetch(`/patterns/${file}`);
+      const response = await fetch(`./patterns/${file}`);
       
       if (file.endsWith('.abc')) {
         // ABC files need to be parsed
