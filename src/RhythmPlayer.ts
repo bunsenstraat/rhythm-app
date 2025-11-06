@@ -144,6 +144,16 @@ export class RhythmPlayer {
     const tapButton = this.container.querySelector('#tap-button') as HTMLButtonElement;
     tapButton.addEventListener('click', () => this.handleTap());
     
+    // Prevent touch events from scrolling/zooming on mobile
+    tapButton.addEventListener('touchstart', (e) => {
+      e.preventDefault();
+      this.handleTap();
+    }, { passive: false });
+    
+    tapButton.addEventListener('touchend', (e) => {
+      e.preventDefault();
+    }, { passive: false });
+    
     // Mode toggle buttons (disabled during playback)
     const practiceModeBtn = this.container.querySelector('#practice-mode-btn');
     const testModeBtn = this.container.querySelector('#test-mode-btn');
@@ -182,6 +192,12 @@ export class RhythmPlayer {
     this.isPlaying = true;
     this.taps = [];
     this.currentNoteIndex = 0;
+    
+    // Prevent scrolling and zooming on mobile during playback
+    document.body.style.overflow = 'hidden';
+    document.body.style.position = 'fixed';
+    document.body.style.width = '100%';
+    document.body.style.touchAction = 'none';
     
     // Hide start button and enable tap button
     const startBtn = this.container.querySelector('#start-playback-btn') as HTMLElement;
@@ -401,6 +417,12 @@ export class RhythmPlayer {
     // Reset cached values
     this.lastDisplayedTitle = '';
     this.lastDisplayedNote = -1;
+    
+    // Restore scrolling on mobile
+    document.body.style.overflow = '';
+    document.body.style.position = '';
+    document.body.style.width = '';
+    document.body.style.touchAction = '';
     
     document.removeEventListener('keydown', this.handleKeyPress);
     

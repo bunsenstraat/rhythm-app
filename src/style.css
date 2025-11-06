@@ -25,6 +25,9 @@ body {
   touch-action: manipulation;
   -webkit-user-select: none;
   user-select: none;
+  /* Prevent bouncy scroll on iOS/iPad */
+  overscroll-behavior-y: none;
+  -webkit-overflow-scrolling: touch;
 }
 
 #app {
@@ -1128,6 +1131,9 @@ button:hover {
 .rhythm-player {
   text-align: center;
   padding: 1rem;
+  /* Prevent scroll/pull-to-refresh on mobile */
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
 }
 
 .rhythm-player h2 {
