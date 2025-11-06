@@ -4,6 +4,7 @@ export class AudioEngine {
   private audioContext: AudioContext;
   private metronomeBuffer: AudioBuffer | null = null;
   private patternBuffer: AudioBuffer | null = null;
+  private tapBuffer: AudioBuffer | null = null;
 
   constructor() {
     this.audioContext = new AudioContext();
@@ -35,6 +36,17 @@ export class AudioEngine {
       patData[i] = Math.sin(2 * Math.PI * 600 * t) * Math.exp(-t * 40);
     }
     this.patternBuffer = patBuffer;
+
+    // Create tap feedback sound (distinctive snappy sound)
+    const tapBuffer = this.audioContext.createBuffer(1, length, sampleRate);
+    const tapData = tapBuffer.getChannelData(0);
+
+    // Tap: bright percussive sound at 800Hz with quick decay
+    for (let i = 0; i < length; i++) {
+      const t = i / sampleRate;
+      tapData[i] = Math.sin(2 * Math.PI * 800 * t) * Math.exp(-t * 100);
+    }
+    this.tapBuffer = tapBuffer;
   }
 
   playMetronome(time?: number, isDownbeat: boolean = false) {
@@ -67,6 +79,22 @@ export class AudioEngine {
     gainNode.connect(this.audioContext.destination);
     
     gainNode.gain.value = 0.4;
+
+    const startTime = time ?? this.audioContext.currentTime;
+    source.start(startTime);
+  }
+
+  playTap(time?: number) {
+    if (!this.tapBuffer) return;
+
+    const source = this.audioContext.createBufferSource();
+    const gainNode = this.audioContext.createGain();
+    
+    source.buffer = this.tapBuffer;
+    source.connect(gainNode);
+    gainNode.connect(this.audioContext.destination);
+    
+    gainNode.gain.value = 0.5;
 
     const startTime = time ?? this.audioContext.currentTime;
     source.start(startTime);
