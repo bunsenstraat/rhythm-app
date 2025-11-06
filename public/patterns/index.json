@@ -11,19 +11,24 @@
       "name": "Eighth Notes"
     },
     {
-      "filename": "rests-and-notes.json",
-      "category": "beginner",
-      "name": "Rests and Notes"
-    },
-    {
       "filename": "half-and-whole-notes.json",
       "category": "beginner",
       "name": "Half and Whole Notes"
     },
     {
-      "filename": "syncopation-1.json",
+      "filename": "rests-and-notes.json",
+      "category": "beginner",
+      "name": "Rests and Notes"
+    },
+    {
+      "filename": "bossa-nova-basic.json",
       "category": "intermediate",
-      "name": "Syncopation 1"
+      "name": "Basic Bossa Nova"
+    },
+    {
+      "filename": "bossa-clave.json",
+      "category": "intermediate",
+      "name": "Bossa Clave Pattern"
     },
     {
       "filename": "dotted-quarter.json",
@@ -31,9 +36,9 @@
       "name": "Dotted Quarter"
     },
     {
-      "filename": "quarter-triplets.json",
+      "filename": "eighth-rest-syncopation.json",
       "category": "intermediate",
-      "name": "Quarter Triplets"
+      "name": "Eighth Rest Syncopation"
     },
     {
       "filename": "eighth-triplets.json",
@@ -41,14 +46,9 @@
       "name": "Eighth Triplets"
     },
     {
-      "filename": "eighth-rest-syncopation.json",
+      "filename": "quarter-triplets.json",
       "category": "intermediate",
-      "name": "Eighth Rest Syncopation"
-    },
-    {
-      "filename": "tied-notes.json",
-      "category": "intermediate",
-      "name": "Tied Notes"
+      "name": "Quarter Triplets"
     },
     {
       "filename": "sixteenth-notes.json",
@@ -56,14 +56,64 @@
       "name": "Sixteenth Notes"
     },
     {
+      "filename": "bossa-ballad.json",
+      "category": "intermediate",
+      "name": "Slow Bossa Ballad"
+    },
+    {
+      "filename": "syncopation-1.json",
+      "category": "intermediate",
+      "name": "Syncopation 1"
+    },
+    {
+      "filename": "tied-notes.json",
+      "category": "intermediate",
+      "name": "Tied Notes"
+    },
+    {
+      "filename": "afro-bossa.json",
+      "category": "advanced",
+      "name": "Afro-Bossa 8-Bar"
+    },
+    {
+      "filename": "bossa-nova-8bar-a.json",
+      "category": "advanced",
+      "name": "Bossa Nova 8-Bar A"
+    },
+    {
+      "filename": "bossa-nova-8bar-b.json",
+      "category": "advanced",
+      "name": "Bossa Nova 8-Bar B"
+    },
+    {
+      "filename": "bossa-montuno.json",
+      "category": "advanced",
+      "name": "Bossa Nova Montuno"
+    },
+    {
+      "filename": "bossa-nova-ties.json",
+      "category": "advanced",
+      "name": "Bossa Nova with Ties"
+    },
+    {
       "filename": "complex-syncopation.json",
       "category": "advanced",
       "name": "Complex Syncopation"
     },
     {
+      "filename": "jobim-bossa.json",
+      "category": "advanced",
+      "name": "Jobim-Style Bossa"
+    },
+    {
       "filename": "mixed-dotted-rhythms.json",
       "category": "advanced",
       "name": "Mixed Dotted Rhythms"
+    },
+    {
+      "filename": "samba-bossa-fusion.json",
+      "category": "advanced",
+      "name": "Samba-Bossa Fusion"
     }
   ]
 }

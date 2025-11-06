@@ -1,0 +1,35 @@
+{
+  "name": "Jobim-Style Bossa",
+  "description": "4-bar pattern inspired by Tom Jobim's compositions",
+  "difficulty": "advanced",
+  "pattern": {
+    "bars": 4,
+    "beatsPerBar": 4,
+    "notes": [
+      { "duration": "8", "type": "note" },
+      { "duration": "8", "type": "rest" },
+      { "duration": "8", "type": "note" },
+      { "duration": "8", "type": "note", "tie": true },
+      { "duration": "8", "type": "note" },
+      { "duration": "8", "type": "rest" },
+      { "duration": "q", "type": "note" },
+      { "duration": "q", "type": "note" },
+      { "duration": "8", "type": "rest" },
+      { "duration": "8", "type": "note" },
+      { "duration": "8", "type": "note" },
+      { "duration": "8", "type": "note", "tie": true },
+      { "duration": "8", "type": "note" },
+      { "duration": "8", "type": "rest" },
+      { "duration": "8", "type": "note" },
+      { "duration": "q", "type": "note" },
+      { "duration": "8", "type": "rest" },
+      { "duration": "8", "type": "note" },
+      { "duration": "8", "type": "note" },
+      { "duration": "8", "type": "note", "tie": true },
+      { "duration": "8", "type": "note" },
+      { "duration": "q", "type": "note" },
+      { "duration": "8", "type": "note" },
+      { "duration": "8", "type": "rest" }
+    ]
+  }
+}
