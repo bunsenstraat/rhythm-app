@@ -9,6 +9,11 @@
       "filename": "pattern9.abc",
       "category": "intermediate",
       "name": "Pattern9"
+    },
+    {
+      "filename": "test-simple.abc",
+      "category": "intermediate",
+      "name": "Simple Quarter Notes"
     }
   ]
 }

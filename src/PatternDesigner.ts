@@ -1295,4 +1295,5 @@ export class PatternDesigner {
     
     return notes;
   }
+
 }

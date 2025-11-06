@@ -83,3 +83,75 @@ Run this script whenever you:
 - Change a pattern's name or difficulty level
 
 The script ensures the pattern index is always in sync with the actual pattern files.
+
+## musicxml_to_abc.py
+
+Converts MusicXML files to ABC notation format using the music21 library.
+
+### Prerequisites
+
+```bash
+# Create a virtual environment (recommended)
+python3 -m venv .venv
+source .venv/bin/activate  # On Windows: .venv\Scripts\activate
+
+# Install dependencies
+pip install -r requirements.txt
+```
+
+### Usage
+
+```bash
+# Convert to stdout
+python scripts/musicxml_to_abc.py input.xml
+
+# Convert to file
+python scripts/musicxml_to_abc.py input.xml output.abc
+```
+
+### Features
+
+- Extracts rhythm from first part/voice of MusicXML
+- Handles all common durations (whole, half, quarter, eighth, sixteenth, dotted)
+- Preserves ties
+- Converts rests
+- Extracts time signature and key
+- Generates clean ABC notation
+
+### Automation
+
+This script is automatically run by the GitHub Action `.github/workflows/convert-musicxml.yml` whenever MusicXML files are pushed to `public/patterns/source-musicxml/`.
+
+The workflow:
+1. Detects new/changed MusicXML files
+2. Converts them to ABC
+3. Commits the ABC files back to the repo
+
+### Examples
+
+Input (MusicXML):
+- `test-simple.xml` - Four quarter notes
+- `test-complex.xml` - Mixed rhythms with ties, rests, dotted notes
+
+Output (ABC):
+```abc
+X:1
+T:Simple Quarter Notes
+M:4/4
+L:1/4
+K:C major
+C C C C |
+```
+
+### Local Testing
+
+Test the converter locally before pushing:
+
+```bash
+source .venv/bin/activate
+python scripts/musicxml_to_abc.py public/patterns/source-musicxml/your-file.xml
+```
+
+### Integration with App
+
+The generated ABC files can be imported using the existing "Import from ABC" feature in the Pattern Designer.

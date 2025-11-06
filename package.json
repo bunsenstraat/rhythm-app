@@ -20,6 +20,7 @@
   "dependencies": {
     "@fontsource/bravura": "^5.2.5",
     "abcjs": "^6.5.2",
+    "musicxml-interfaces": "^0.0.21",
     "vexflow": "^5.0.0"
   }
 }
