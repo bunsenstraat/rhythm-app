@@ -37,14 +37,16 @@ export class AudioEngine {
     }
     this.patternBuffer = patBuffer;
 
-    // Create tap feedback sound (distinctive snappy sound)
-    const tapBuffer = this.audioContext.createBuffer(1, length, sampleRate);
+    // Create tap feedback sound (very short, snappy percussion)
+    const tapDuration = 0.02; // 20ms - even shorter for instant feel
+    const tapLength = sampleRate * tapDuration;
+    const tapBuffer = this.audioContext.createBuffer(1, tapLength, sampleRate);
     const tapData = tapBuffer.getChannelData(0);
 
-    // Tap: bright percussive sound at 800Hz with quick decay
-    for (let i = 0; i < length; i++) {
+    // Tap: bright percussive sound at 800Hz with very quick decay for instant response
+    for (let i = 0; i < tapLength; i++) {
       const t = i / sampleRate;
-      tapData[i] = Math.sin(2 * Math.PI * 800 * t) * Math.exp(-t * 100);
+      tapData[i] = Math.sin(2 * Math.PI * 800 * t) * Math.exp(-t * 150);
     }
     this.tapBuffer = tapBuffer;
   }
@@ -96,7 +98,8 @@ export class AudioEngine {
     
     gainNode.gain.value = 0.5;
 
-    const startTime = time ?? this.audioContext.currentTime;
+    // For immediate playback (no time specified), start instantly for lowest latency
+    const startTime = time !== undefined ? time : this.audioContext.currentTime;
     source.start(startTime);
   }
 

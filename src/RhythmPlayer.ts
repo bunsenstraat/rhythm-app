@@ -315,7 +315,8 @@ export class RhythmPlayer {
   private handleTap() {
     if (!this.isPlaying) return;
     
-    // Play tap feedback sound immediately
+    // Ensure AudioContext is running and play tap feedback sound immediately
+    this.audioEngine.resume();
     this.audioEngine.playTap();
     
     const beatDuration = (60 / this.tempo) * 1000;
