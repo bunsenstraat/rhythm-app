@@ -323,13 +323,18 @@ export class RhythmPlayer {
     const countInDuration = this.pattern.beatsPerBar * beatDuration;
     const tapTime = Date.now() - this.startTime;
     
-    // Ignore taps during count-in
-    if (tapTime < countInDuration) {
-      return;
-    }
-    
     // Adjust tap time to be relative to pattern start (after count-in)
     const patternTapTime = tapTime - countInDuration;
+    
+    // Allow taps within a tolerance window before pattern start (early anticipation)
+    // e.g., if you tap 50ms before beat 1, it counts as -50ms for the first note
+    const earlyTapTolerance = 200; // Allow taps up to 200ms before pattern starts
+    
+    // Ignore taps that are too early (more than tolerance before pattern start)
+    if (patternTapTime < -earlyTapTolerance) {
+      console.log(`[Tap] Too early: ${patternTapTime.toFixed(0)}ms (ignored)`);
+      return;
+    }
     
     // Find closest expected tap
     let closestExpected = -1;

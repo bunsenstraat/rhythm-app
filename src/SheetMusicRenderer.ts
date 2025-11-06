@@ -116,8 +116,9 @@ export class SheetMusicRenderer {
         }
         
         // Stop searching if we've gone too far past the expected time
-        // (optimization: no point checking taps that are way in the future)
-        if (tap.timestamp > expectedTime + tolerance) {
+        // BUT: allow checking a bit further to catch early taps for next notes
+        // Only break if we're beyond the tolerance window
+        if (tap.timestamp > expectedTime + tolerance * 2) {
           break;
         }
       }
