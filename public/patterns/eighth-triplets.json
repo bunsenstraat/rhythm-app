@@ -1,0 +1,19 @@
+{
+  "name": "Eighth Triplets",
+  "description": "Three eighth notes in the space of one quarter",
+  "difficulty": "intermediate",
+  "pattern": {
+    "bars": 1,
+    "beatsPerBar": 4,
+    "notes": [
+      { "duration": "83", "type": "note" },
+      { "duration": "83", "type": "note" },
+      { "duration": "83", "type": "note" },
+      { "duration": "83", "type": "note" },
+      { "duration": "83", "type": "note" },
+      { "duration": "83", "type": "note" },
+      { "duration": "q", "type": "note" },
+      { "duration": "q", "type": "note" }
+    ]
+  }
+}

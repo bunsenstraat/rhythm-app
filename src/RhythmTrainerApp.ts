@@ -5,6 +5,7 @@ import { AudioEngine } from './AudioEngine';
 import { PatternDesigner } from './PatternDesigner';
 import { RhythmPlayer } from './RhythmPlayer';
 import { ResultsDisplay } from './ResultsDisplay';
+import { Toast } from './Toast';
 
 export class RhythmTrainerApp {
   private container: HTMLElement;
@@ -103,7 +104,7 @@ export class RhythmTrainerApp {
       if (this.pattern && this.pattern.notes.length > 0 && this.pattern.notes.some(n => n.type === 'note')) {
         this.startPractice();
       } else {
-        alert('Please design a rhythm pattern with at least one note!');
+        Toast.error('Please design a rhythm pattern with at least one note!');
       }
     });
   }

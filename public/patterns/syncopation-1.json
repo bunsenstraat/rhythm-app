@@ -1,0 +1,16 @@
+{
+  "name": "Syncopation 1",
+  "description": "Quarter, eighth, eighth, quarter, quarter",
+  "difficulty": "intermediate",
+  "pattern": {
+    "bars": 1,
+    "beatsPerBar": 4,
+    "notes": [
+      { "duration": "q", "type": "note" },
+      { "duration": "8", "type": "note" },
+      { "duration": "8", "type": "note" },
+      { "duration": "q", "type": "note" },
+      { "duration": "q", "type": "note" }
+    ]
+  }
+}

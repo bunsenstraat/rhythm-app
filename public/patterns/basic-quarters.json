@@ -1,0 +1,15 @@
+{
+  "name": "Basic Quarters",
+  "description": "Four quarter notes - the foundation of rhythm",
+  "difficulty": "beginner",
+  "pattern": {
+    "bars": 1,
+    "beatsPerBar": 4,
+    "notes": [
+      { "duration": "q", "type": "note" },
+      { "duration": "q", "type": "note" },
+      { "duration": "q", "type": "note" },
+      { "duration": "q", "type": "note" }
+    ]
+  }
+}

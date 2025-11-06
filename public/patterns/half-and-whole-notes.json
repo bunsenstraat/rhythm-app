@@ -1,0 +1,14 @@
+{
+  "name": "Half and Whole Notes",
+  "description": "Longer note values",
+  "difficulty": "beginner",
+  "pattern": {
+    "bars": 2,
+    "beatsPerBar": 4,
+    "notes": [
+      { "duration": "h", "type": "note" },
+      { "duration": "h", "type": "note" },
+      { "duration": "w", "type": "note" }
+    ]
+  }
+}

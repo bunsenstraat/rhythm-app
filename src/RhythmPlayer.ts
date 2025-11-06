@@ -3,6 +3,7 @@
 import type { RhythmPattern, TapEvent } from './types';
 import { AudioEngine } from './AudioEngine';
 import { SheetMusicRenderer } from './SheetMusicRenderer';
+import { Toast } from './Toast';
 
 export class RhythmPlayer {
   private container: HTMLElement;
@@ -161,7 +162,7 @@ export class RhythmPlayer {
 
   private toggleMode(practiceMode: boolean) {
     if (this.isPlaying) {
-      alert('Cannot change mode during playback');
+      Toast.error('Cannot change mode during playback');
       return;
     }
     

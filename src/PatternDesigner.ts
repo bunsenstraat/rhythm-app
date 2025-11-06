@@ -3,6 +3,7 @@
 import type { RhythmPattern, NoteDuration, NoteType, TestResults } from './types';
 import { SheetMusicRenderer } from './SheetMusicRenderer';
 import { AudioEngine } from './AudioEngine';
+import { Toast } from './Toast';
 
 export class PatternDesigner {
   private container: HTMLElement;
@@ -123,8 +124,10 @@ export class PatternDesigner {
             <button id="save-pattern-btn" class="mgmt-btn">💾 Save Pattern</button>
             <button id="load-pattern-btn" class="mgmt-btn">📂 Load Pattern</button>
             <button id="new-pattern-btn" class="mgmt-btn">📄 New Pattern</button>
+            <button id="load-preset-btn" class="mgmt-btn">🎵 Load Preset Patterns</button>
           </div>
           <div id="saved-patterns-list" class="saved-patterns-list"></div>
+          <div id="preset-patterns-list" class="preset-patterns-list"></div>
         </div>
         
         <div class="pattern-presets">
@@ -331,6 +334,7 @@ export class PatternDesigner {
     this.container.querySelector('#save-pattern-btn')?.addEventListener('click', () => this.savePattern());
     this.container.querySelector('#load-pattern-btn')?.addEventListener('click', () => this.toggleSavedPatternsList());
     this.container.querySelector('#new-pattern-btn')?.addEventListener('click', () => this.newPattern());
+    this.container.querySelector('#load-preset-btn')?.addEventListener('click', () => this.togglePresetPatternsList());
     
     // Load saved patterns list
     this.renderSavedPatternsList();
@@ -460,7 +464,7 @@ export class PatternDesigner {
   private async playPattern() {
     if (this.isPlaying) return;
     if (this.pattern.notes.length === 0) {
-      alert('Add some notes first!');
+      Toast.error('Add some notes first!');
       return;
     }
 
@@ -741,7 +745,7 @@ export class PatternDesigner {
     
     localStorage.setItem('rhythmPatterns', JSON.stringify(savedPatterns));
     this.renderSavedPatternsList();
-    alert(`Pattern "${name}" saved!`);
+    Toast.success(`Pattern "${name}" saved!`);
   }
 
   private loadPattern(name: string) {
@@ -749,7 +753,7 @@ export class PatternDesigner {
     if (savedPatterns[name]) {
       this.pattern = savedPatterns[name].pattern;
       this.updateDisplay();
-      alert(`Pattern "${name}" loaded!`);
+      Toast.success(`Pattern "${name}" loaded!`);
     }
   }
 
@@ -842,5 +846,104 @@ export class PatternDesigner {
         this.deletePattern(name);
       });
     });
+  }
+  
+  // Preset patterns methods
+  private async loadPresetPattern(filename: string) {
+    try {
+      // Construct the path - in production the base is /rhythm-app/, in dev it's /
+      const basePath = import.meta.env.MODE === 'production' ? '/rhythm-app' : '';
+      const response = await fetch(`${basePath}/patterns/${filename}`);
+      
+      if (!response.ok) {
+        throw new Error(`Failed to load preset pattern: ${response.statusText}`);
+      }
+      
+      const presetData = await response.json();
+      this.pattern = presetData.pattern;
+      this.updateDisplay();
+      Toast.success(`Loaded: ${presetData.name}`, 4000);
+      Toast.info(presetData.description, 5000);
+    } catch (error) {
+      console.error('Error loading preset pattern:', error);
+      Toast.error('Failed to load preset pattern. Please try again.');
+    }
+  }
+  
+  private async togglePresetPatternsList() {
+    const list = this.container.querySelector('#preset-patterns-list') as HTMLElement;
+    if (list.style.display === 'none' || !list.style.display) {
+      list.style.display = 'block';
+      await this.renderPresetPatternsList();
+    } else {
+      list.style.display = 'none';
+    }
+  }
+  
+  private async renderPresetPatternsList() {
+    const list = this.container.querySelector('#preset-patterns-list');
+    if (!list) return;
+
+    try {
+      // Fetch the index of preset patterns
+      const basePath = import.meta.env.MODE === 'production' ? '/rhythm-app' : '';
+      const response = await fetch(`${basePath}/patterns/index.json`);
+      
+      if (!response.ok) {
+        throw new Error(`Failed to load preset patterns index: ${response.statusText}`);
+      }
+      
+      const index = await response.json();
+      const patterns = index.patterns || [];
+
+      if (patterns.length === 0) {
+        list.innerHTML = '<p style="color: #888; padding: 1rem; text-align: center;">No preset patterns available.</p>';
+        return;
+      }
+
+      // Group patterns by category
+      const grouped: Record<string, any[]> = {};
+      patterns.forEach((pattern: any) => {
+        if (!grouped[pattern.category]) {
+          grouped[pattern.category] = [];
+        }
+        grouped[pattern.category].push(pattern);
+      });
+
+      // Render grouped patterns
+      let html = '';
+      ['beginner', 'intermediate', 'advanced'].forEach(category => {
+        if (grouped[category] && grouped[category].length > 0) {
+          html += `
+            <div class="preset-category">
+              <h4 style="text-transform: capitalize; color: #3b82f6; margin: 1rem 0 0.5rem 0;">${category}</h4>
+              ${grouped[category].map((pattern: any) => `
+                <div class="preset-pattern-item">
+                  <div class="pattern-info">
+                    <strong>${pattern.name}</strong>
+                  </div>
+                  <div class="pattern-actions">
+                    <button class="load-preset-btn" data-filename="${pattern.filename}">Load</button>
+                  </div>
+                </div>
+              `).join('')}
+            </div>
+          `;
+        }
+      });
+
+      list.innerHTML = html;
+
+      // Attach event listeners
+      list.querySelectorAll('.load-preset-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          const filename = (e.currentTarget as HTMLElement).dataset.filename!;
+          this.loadPresetPattern(filename);
+        });
+      });
+    } catch (error) {
+      console.error('Error rendering preset patterns list:', error);
+      list.innerHTML = '<p style="color: #ef4444; padding: 1rem;">Failed to load preset patterns. Please try again.</p>';
+    }
   }
 }

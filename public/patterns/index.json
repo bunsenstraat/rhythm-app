@@ -1,0 +1,69 @@
+{
+  "patterns": [
+    {
+      "filename": "basic-quarters.json",
+      "category": "beginner",
+      "name": "Basic Quarters"
+    },
+    {
+      "filename": "eighth-notes.json",
+      "category": "beginner",
+      "name": "Eighth Notes"
+    },
+    {
+      "filename": "rests-and-notes.json",
+      "category": "beginner",
+      "name": "Rests and Notes"
+    },
+    {
+      "filename": "half-and-whole-notes.json",
+      "category": "beginner",
+      "name": "Half and Whole Notes"
+    },
+    {
+      "filename": "syncopation-1.json",
+      "category": "intermediate",
+      "name": "Syncopation 1"
+    },
+    {
+      "filename": "dotted-quarter.json",
+      "category": "intermediate",
+      "name": "Dotted Quarter"
+    },
+    {
+      "filename": "quarter-triplets.json",
+      "category": "intermediate",
+      "name": "Quarter Triplets"
+    },
+    {
+      "filename": "eighth-triplets.json",
+      "category": "intermediate",
+      "name": "Eighth Triplets"
+    },
+    {
+      "filename": "eighth-rest-syncopation.json",
+      "category": "intermediate",
+      "name": "Eighth Rest Syncopation"
+    },
+    {
+      "filename": "tied-notes.json",
+      "category": "intermediate",
+      "name": "Tied Notes"
+    },
+    {
+      "filename": "sixteenth-notes.json",
+      "category": "intermediate",
+      "name": "Sixteenth Notes"
+    },
+    {
+      "filename": "complex-syncopation.json",
+      "category": "advanced",
+      "name": "Complex Syncopation"
+    },
+    {
+      "filename": "mixed-dotted-rhythms.json",
+      "category": "advanced",
+      "name": "Mixed Dotted Rhythms"
+    }
+  ]
+}

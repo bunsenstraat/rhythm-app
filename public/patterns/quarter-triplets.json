@@ -1,0 +1,15 @@
+{
+  "name": "Quarter Triplets",
+  "description": "Three quarter notes in the space of two",
+  "difficulty": "intermediate",
+  "pattern": {
+    "bars": 1,
+    "beatsPerBar": 4,
+    "notes": [
+      { "duration": "q3", "type": "note" },
+      { "duration": "q3", "type": "note" },
+      { "duration": "q3", "type": "note" },
+      { "duration": "q", "type": "note" }
+    ]
+  }
+}
