@@ -18,6 +18,7 @@ export class RhythmPlayer {
   private noteTimes: number[] = []; // Actual time for each note in ms
   private onComplete: (taps: TapEvent[], expectedTaps: number[]) => void;
   private sheetMusicRenderer: SheetMusicRenderer | null = null;
+  private practiceMode: boolean = true; // Practice mode plays pattern, test mode only plays metronome
 
   constructor(
     container: HTMLElement,
@@ -34,16 +35,19 @@ export class RhythmPlayer {
   }
 
   async start() {
+    // Load saved mode from localStorage
+    const savedMode = localStorage.getItem('rhythmTrainerMode');
+    if (savedMode !== null) {
+      this.practiceMode = savedMode === 'practice';
+    }
+    
     await this.audioEngine.resume();
-    this.isPlaying = true;
-    this.taps = [];
-    this.currentNoteIndex = 0;
     
     // Calculate note times and expected taps
     this.calculateNoteTimes();
     
     this.render();
-    this.startPlayback();
+    // Don't auto-start playback - wait for user to click Start
   }
 
   private calculateNoteTimes() {
@@ -80,10 +84,27 @@ export class RhythmPlayer {
 
   private render() {
     const totalNotes = this.pattern.notes.filter(n => n.type === 'note').length;
+    const modeText = this.practiceMode ? '🎵 Practice Mode' : '🎯 Test Mode';
+    const modeDesc = this.practiceMode ? 'You will hear the pattern' : 'Only metronome, no pattern sound';
     
     this.container.innerHTML = `
       <div class="rhythm-player">
-        <h2 id="player-title">Get Ready...</h2>
+        <h2 id="player-title">Ready to Play</h2>
+        
+        <div class="mode-toggle">
+          <button id="practice-mode-btn" class="mode-btn ${this.practiceMode ? 'active' : ''}" ${this.isPlaying ? 'disabled' : ''}>
+            🎵 Practice Mode
+          </button>
+          <button id="test-mode-btn" class="mode-btn ${!this.practiceMode ? 'active' : ''}" ${this.isPlaying ? 'disabled' : ''}>
+            🎯 Test Mode
+          </button>
+        </div>
+        
+        <p style="color: #888; margin: 0.5rem 0;">${modeDesc}</p>
+        
+        <button id="start-playback-btn" class="start-playback-btn" style="${this.isPlaying ? 'display: none;' : ''}">
+          🚀 Start ${modeText}
+        </button>
         
         <div class="sheet-music-container" id="sheet-music-player"></div>
         
@@ -96,7 +117,7 @@ export class RhythmPlayer {
         </div>
         
         <div class="tap-button-container">
-          <button id="tap-button" class="tap-button">
+          <button id="tap-button" class="tap-button" ${!this.isPlaying ? 'disabled' : ''}>
             TAP
           </button>
         </div>
@@ -107,8 +128,19 @@ export class RhythmPlayer {
       </div>
     `;
 
+    // Start playback button
+    const startBtn = this.container.querySelector('#start-playback-btn');
+    startBtn?.addEventListener('click', () => this.beginPlayback());
+
     const tapButton = this.container.querySelector('#tap-button') as HTMLButtonElement;
     tapButton.addEventListener('click', () => this.handleTap());
+    
+    // Mode toggle buttons (disabled during playback)
+    const practiceModeBtn = this.container.querySelector('#practice-mode-btn');
+    const testModeBtn = this.container.querySelector('#test-mode-btn');
+    
+    practiceModeBtn?.addEventListener('click', () => this.toggleMode(true));
+    testModeBtn?.addEventListener('click', () => this.toggleMode(false));
     
     // Also allow spacebar for tapping
     document.addEventListener('keydown', this.handleKeyPress);
@@ -119,6 +151,40 @@ export class RhythmPlayer {
       this.sheetMusicRenderer = new SheetMusicRenderer(sheetMusicContainer, this.pattern);
       this.sheetMusicRenderer.render();
     }
+  }
+
+  private toggleMode(practiceMode: boolean) {
+    if (this.isPlaying) {
+      alert('Cannot change mode during playback');
+      return;
+    }
+    
+    this.practiceMode = practiceMode;
+    
+    // Save mode to localStorage
+    localStorage.setItem('rhythmTrainerMode', practiceMode ? 'practice' : 'test');
+    
+    // Re-render to update UI
+    this.render();
+  }
+
+  private async beginPlayback() {
+    this.isPlaying = true;
+    this.taps = [];
+    this.currentNoteIndex = 0;
+    
+    // Hide start button and enable tap button
+    const startBtn = this.container.querySelector('#start-playback-btn') as HTMLElement;
+    const tapBtn = this.container.querySelector('#tap-button') as HTMLButtonElement;
+    const practiceModeBtn = this.container.querySelector('#practice-mode-btn') as HTMLButtonElement;
+    const testModeBtn = this.container.querySelector('#test-mode-btn') as HTMLButtonElement;
+    
+    if (startBtn) startBtn.style.display = 'none';
+    if (tapBtn) tapBtn.disabled = false;
+    if (practiceModeBtn) practiceModeBtn.disabled = true;
+    if (testModeBtn) testModeBtn.disabled = true;
+    
+    this.startPlayback();
   }
 
   private handleKeyPress = (e: KeyboardEvent) => {
@@ -132,7 +198,16 @@ export class RhythmPlayer {
     const beatDuration = (60 / this.tempo) * 1000; // ms per beat
     const countInBeats = this.pattern.beatsPerBar; // 1 bar count-in
     const countInDuration = countInBeats * beatDuration;
-    const totalDuration = this.noteTimes[this.noteTimes.length - 1] || beatDuration * 4;
+    
+    // Calculate total duration including the last note's duration
+    const beatValues: Record<string, number> = {
+      'w': 4, 'h': 2, 'q': 1, '8': 0.5, '16': 0.25, 'q3': 2/3, '83': 1/3
+    };
+    const lastNoteStart = this.noteTimes[this.noteTimes.length - 1] || 0;
+    const lastNoteDuration = this.pattern.notes.length > 0 
+      ? beatValues[this.pattern.notes[this.pattern.notes.length - 1].duration] * beatDuration 
+      : beatDuration;
+    const totalDuration = lastNoteStart + lastNoteDuration;
     
     // Small delay to ensure everything is ready
     const startDelay = 0.1; // 100ms
@@ -145,24 +220,27 @@ export class RhythmPlayer {
     for (let i = 0; i < countInBeats; i++) {
       const beatTime = audioContextStartTime + (i * beatDuration / 1000);
       const isDownbeat = i === 0;
-      const frequency = isDownbeat ? 1400 : 1000;
-      this.audioEngine.playClick(beatTime, frequency);
+      this.audioEngine.playMetronome(beatTime, isDownbeat);
     }
     
-    // Schedule pattern metronome clicks based on actual note times
-    this.pattern.notes.forEach((note, index) => {
-      if (note.type === 'note') {
-        const noteTime = this.noteTimes[index];
-        const beatTime = audioContextStartTime + ((countInDuration + noteTime) / 1000);
-        
-        // Determine if it's a downbeat (first note of each bar)
-        const totalBeatsElapsed = noteTime / beatDuration;
-        const isDownbeat = Math.abs(totalBeatsElapsed % this.pattern.beatsPerBar) < 0.01;
-        const frequency = isDownbeat ? 1200 : 800;
-        
-        this.audioEngine.playClick(beatTime, frequency);
-      }
-    });
+    // Schedule continuous metronome during pattern (every beat)
+    const totalBeatsInPattern = Math.ceil(totalDuration / beatDuration);
+    for (let i = 0; i < totalBeatsInPattern; i++) {
+      const beatTime = audioContextStartTime + ((countInDuration + i * beatDuration) / 1000);
+      const isDownbeat = i % this.pattern.beatsPerBar === 0;
+      this.audioEngine.playMetronome(beatTime, isDownbeat);
+    }
+    
+    // Schedule pattern sounds (only in practice mode and only on actual notes, not rests)
+    if (this.practiceMode) {
+      this.pattern.notes.forEach((note, index) => {
+        if (note.type === 'note') {
+          const noteTime = this.noteTimes[index];
+          const beatTime = audioContextStartTime + ((countInDuration + noteTime) / 1000);
+          this.audioEngine.playPattern(beatTime);
+        }
+      });
+    }
     
     // Update UI
     this.intervalId = window.setInterval(() => {
@@ -179,7 +257,8 @@ export class RhythmPlayer {
         // During count-in
         const countBeat = Math.floor(elapsed / beatDuration) + 1;
         if (playerTitle) {
-          playerTitle.textContent = `Count In: ${countBeat}`;
+          const modeText = this.practiceMode ? 'Practice' : 'Test';
+          playerTitle.textContent = `${modeText} - Count In: ${countBeat}`;
         }
         if (noteNumber) {
           noteNumber.textContent = '0';

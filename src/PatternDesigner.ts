@@ -2,6 +2,7 @@
 
 import type { RhythmPattern, NoteDuration, NoteType, TestResults } from './types';
 import { SheetMusicRenderer } from './SheetMusicRenderer';
+import { AudioEngine } from './AudioEngine';
 
 export class PatternDesigner {
   private container: HTMLElement;
@@ -11,6 +12,8 @@ export class PatternDesigner {
   private selectedDuration: NoteDuration = 'q';
   private selectedType: NoteType = 'note';
   private lastResults: TestResults | null = null;
+  private audioEngine: AudioEngine;
+  private isPlaying: boolean = false;
 
   constructor(
     container: HTMLElement, 
@@ -21,6 +24,7 @@ export class PatternDesigner {
     this.container = container;
     this.onPatternChange = onPatternChange;
     this.lastResults = lastResults;
+    this.audioEngine = new AudioEngine();
     this.pattern = initialPattern || {
       bars: 4,
       beatsPerBar: 4,
@@ -71,6 +75,7 @@ export class PatternDesigner {
         
         <div class="editor-controls">
           <button id="add-note-btn" class="action-btn">Add Note</button>
+          <button id="play-pattern-btn" class="action-btn play-btn">▶️ Play Pattern</button>
           <button id="clear-all-btn" class="action-btn">Clear All</button>
         </div>
         
@@ -187,6 +192,11 @@ export class PatternDesigner {
       this.addNote();
     });
 
+    // Play pattern button
+    this.container.querySelector('#play-pattern-btn')?.addEventListener('click', () => {
+      this.playPattern();
+    });
+
     // Clear all button
     this.container.querySelector('#clear-all-btn')?.addEventListener('click', () => {
       this.pattern.notes = [];
@@ -232,6 +242,87 @@ export class PatternDesigner {
       type: this.selectedType
     });
     this.updateDisplay();
+  }
+
+  private async playPattern() {
+    if (this.isPlaying) return;
+    if (this.pattern.notes.length === 0) {
+      alert('Add some notes first!');
+      return;
+    }
+
+    this.isPlaying = true;
+    const playBtn = this.container.querySelector('#play-pattern-btn') as HTMLButtonElement;
+    if (playBtn) {
+      playBtn.textContent = '⏸️ Playing...';
+      playBtn.disabled = true;
+    }
+
+    await this.audioEngine.resume();
+
+    // Calculate timing - use saved tempo or default to 120
+    const savedTempo = localStorage.getItem('rhythmTrainerTempo');
+    const tempo = savedTempo ? parseInt(savedTempo) : 120;
+    const beatDuration = (60 / tempo) * 1000; // ms per beat
+    
+    const beatValues: Record<string, number> = {
+      'w': 4,
+      'h': 2,
+      'q': 1,
+      '8': 0.5,
+      '16': 0.25,
+      'q3': 2/3,
+      '83': 1/3
+    };
+
+    const noteTimes: number[] = [];
+    let currentTime = 0;
+    
+    this.pattern.notes.forEach((note) => {
+      noteTimes.push(currentTime);
+      const noteBeats = beatValues[note.duration];
+      currentTime += noteBeats * beatDuration;
+    });
+
+    const totalDuration = currentTime;
+    const startDelay = 0.1;
+    const audioStartTime = this.audioEngine.getContextTime() + startDelay;
+    
+    // Add count-in (one bar)
+    const countInBeats = this.pattern.beatsPerBar;
+    const countInDuration = countInBeats * beatDuration;
+    
+    // Schedule count-in metronome clicks
+    for (let i = 0; i < countInBeats; i++) {
+      const beatTime = audioStartTime + (i * beatDuration / 1000);
+      const isDownbeat = i === 0;
+      this.audioEngine.playMetronome(beatTime, isDownbeat);
+    }
+
+    // Schedule metronome beats during pattern
+    const totalBeats = Math.ceil(totalDuration / beatDuration);
+    for (let i = 0; i < totalBeats; i++) {
+      const beatTime = audioStartTime + ((countInDuration + i * beatDuration) / 1000);
+      const isDownbeat = i % this.pattern.beatsPerBar === 0;
+      this.audioEngine.playMetronome(beatTime, isDownbeat);
+    }
+
+    // Schedule pattern notes (after count-in)
+    this.pattern.notes.forEach((note, index) => {
+      if (note.type === 'note') {
+        const beatTime = audioStartTime + ((countInDuration + noteTimes[index]) / 1000);
+        this.audioEngine.playPattern(beatTime);
+      }
+    });
+
+    // Reset button after playback (including count-in)
+    setTimeout(() => {
+      this.isPlaying = false;
+      if (playBtn) {
+        playBtn.textContent = '▶️ Play Pattern';
+        playBtn.disabled = false;
+      }
+    }, countInDuration + totalDuration + (startDelay * 1000) + 500);
   }
 
   private applyPreset(preset: string) {

@@ -6,11 +6,18 @@ export class ResultsDisplay {
   private container: HTMLElement;
   private results: TestResults;
   private onRestart: () => void;
+  private onBackToDesigner: () => void;
 
-  constructor(container: HTMLElement, results: TestResults, onRestart: () => void) {
+  constructor(
+    container: HTMLElement, 
+    results: TestResults, 
+    onRestart: () => void,
+    onBackToDesigner: () => void
+  ) {
     this.container = container;
     this.results = results;
     this.onRestart = onRestart;
+    this.onBackToDesigner = onBackToDesigner;
     this.render();
   }
 
@@ -58,12 +65,19 @@ export class ResultsDisplay {
           </div>
         </div>
         
-        <button id="restart-button" class="primary-button">Try Again</button>
+        <div class="results-actions">
+          <button id="try-again-button" class="primary-button">🔄 Try Again</button>
+          <button id="back-designer-button" class="secondary-button">← Back to Designer</button>
+        </div>
       </div>
     `;
 
-    this.container.querySelector('#restart-button')?.addEventListener('click', () => {
+    this.container.querySelector('#try-again-button')?.addEventListener('click', () => {
       this.onRestart();
+    });
+    
+    this.container.querySelector('#back-designer-button')?.addEventListener('click', () => {
+      this.onBackToDesigner();
     });
   }
 

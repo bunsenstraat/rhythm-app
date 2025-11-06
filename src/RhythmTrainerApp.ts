@@ -21,6 +21,12 @@ export class RhythmTrainerApp {
   }
 
   private init() {
+    // Load saved tempo from localStorage
+    const savedTempo = localStorage.getItem('rhythmTrainerTempo');
+    if (savedTempo) {
+      this.tempo = parseInt(savedTempo);
+    }
+    
     this.renderLayout();
     this.showDesigner();
   }
@@ -44,8 +50,20 @@ export class RhythmTrainerApp {
       <div id="designer-container"></div>
       
       <div class="tempo-control">
-        <label for="tempo">Tempo: <span id="tempo-value">${this.tempo}</span> BPM</label>
-        <input type="range" id="tempo" min="40" max="240" value="${this.tempo}" />
+        <label class="tempo-label">Tempo: <span id="tempo-value">${this.tempo}</span> BPM</label>
+        
+        <div class="tempo-presets">
+          <button class="tempo-preset-btn" data-tempo="40">Largo<br><small>40 BPM</small></button>
+          <button class="tempo-preset-btn" data-tempo="60">Adagio<br><small>60 BPM</small></button>
+          <button class="tempo-preset-btn" data-tempo="90">Andante<br><small>90 BPM</small></button>
+          <button class="tempo-preset-btn" data-tempo="108">Moderato<br><small>108 BPM</small></button>
+          <button class="tempo-preset-btn" data-tempo="132">Allegro<br><small>132 BPM</small></button>
+          <button class="tempo-preset-btn" data-tempo="180">Presto<br><small>180 BPM</small></button>
+        </div>
+        
+        <div class="tempo-slider-container">
+          <input type="range" id="tempo" min="40" max="240" value="${this.tempo}" />
+        </div>
       </div>
       
       <button id="start-button" class="primary-button">Start Practice</button>
@@ -61,12 +79,24 @@ export class RhythmTrainerApp {
       this.pattern
     );
 
-    // Tempo control
+    // Tempo slider control
     const tempoInput = document.getElementById('tempo') as HTMLInputElement;
     tempoInput.addEventListener('input', (e) => {
-      this.tempo = parseInt((e.target as HTMLInputElement).value);
-      document.getElementById('tempo-value')!.textContent = this.tempo.toString();
+      this.setTempo(parseInt((e.target as HTMLInputElement).value));
     });
+
+    // Tempo preset buttons
+    const presetButtons = document.querySelectorAll('.tempo-preset-btn');
+    presetButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const tempo = parseInt((btn as HTMLElement).dataset.tempo || '120');
+        this.setTempo(tempo);
+        tempoInput.value = tempo.toString();
+      });
+    });
+    
+    // Highlight active preset
+    this.updateActivePreset();
 
     // Start button
     document.getElementById('start-button')?.addEventListener('click', () => {
@@ -74,6 +104,25 @@ export class RhythmTrainerApp {
         this.startPractice();
       } else {
         alert('Please design a rhythm pattern with at least one note!');
+      }
+    });
+  }
+  
+  private setTempo(tempo: number) {
+    this.tempo = tempo;
+    localStorage.setItem('rhythmTrainerTempo', tempo.toString());
+    document.getElementById('tempo-value')!.textContent = tempo.toString();
+    this.updateActivePreset();
+  }
+  
+  private updateActivePreset() {
+    const presetButtons = document.querySelectorAll('.tempo-preset-btn');
+    presetButtons.forEach(btn => {
+      const btnTempo = parseInt((btn as HTMLElement).dataset.tempo || '0');
+      if (btnTempo === this.tempo) {
+        btn.classList.add('active');
+      } else {
+        btn.classList.remove('active');
       }
     });
   }
@@ -107,7 +156,12 @@ export class RhythmTrainerApp {
     main.innerHTML = '<div id="results-container"></div>';
 
     const resultsContainer = document.getElementById('results-container')!;
-    new ResultsDisplay(resultsContainer, results, () => this.showDesigner());
+    new ResultsDisplay(
+      resultsContainer, 
+      results, 
+      () => this.startPractice(), // Try Again - restart practice
+      () => this.showDesigner()   // Back to Designer
+    );
   }
 
   private calculateResults(taps: TapEvent[], expectedTaps: number[]): TestResults {

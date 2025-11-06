@@ -197,6 +197,19 @@ body {
   font-weight: 600;
 }
 
+.action-btn.play-btn {
+  background: #10b981;
+}
+
+.action-btn.play-btn:hover {
+  background: #059669;
+}
+
+.action-btn.play-btn:disabled {
+  background: #6b7280;
+  cursor: not-allowed;
+}
+
 .controls {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
@@ -430,6 +443,63 @@ body {
   margin-bottom: 2rem;
 }
 
+.tempo-control .tempo-label {
+  display: block;
+  font-weight: 500;
+  color: #ccc;
+  margin-bottom: 1rem;
+  font-size: 1.1rem;
+}
+
+.tempo-presets {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.tempo-preset-btn {
+  flex: 1;
+  min-width: 100px;
+  padding: 0.8rem 0.5rem;
+  background: #0f3460;
+  color: #ccc;
+  border: 2px solid transparent;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 0.9rem;
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.tempo-preset-btn small {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 400;
+  color: #999;
+  margin-top: 0.2rem;
+}
+
+.tempo-preset-btn:hover {
+  background: #1a4d7a;
+  border-color: #667eea;
+}
+
+.tempo-preset-btn.active {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-color: #764ba2;
+}
+
+.tempo-preset-btn.active small {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.tempo-slider-container {
+  margin-top: 1rem;
+}
+
 .tempo-control label {
   display: block;
   font-weight: 500;
@@ -498,6 +568,38 @@ button:hover {
   box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
 }
 
+.secondary-button {
+  background: #16213e;
+  color: #fff;
+  border: 2px solid #667eea;
+  font-size: 1.2rem;
+  padding: 1rem 3rem;
+  border-radius: 12px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  display: block;
+  margin: 0 auto;
+}
+
+.secondary-button:hover {
+  background: #667eea;
+  transform: translateY(-2px);
+  box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+}
+
+.results-actions {
+  display: flex;
+  gap: 1.5rem;
+  justify-content: center;
+  margin-top: 2rem;
+}
+
+.results-actions button {
+  flex: 1;
+  max-width: 300px;
+}
+
 /* Rhythm Player */
 .rhythm-player {
   text-align: center;
@@ -507,6 +609,71 @@ button:hover {
 .rhythm-player h2 {
   margin-top: 0;
   font-size: 2rem;
+}
+
+.mode-toggle {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  margin: 1.5rem 0;
+}
+
+.mode-btn {
+  padding: 0.75rem 1.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+  border: 2px solid #667eea;
+  background: transparent;
+  color: #667eea;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.mode-btn:hover {
+  background: rgba(102, 126, 234, 0.1);
+}
+
+.mode-btn.active {
+  background: #667eea;
+  color: white;
+}
+
+.mode-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.start-playback-btn {
+  padding: 1rem 2rem;
+  font-size: 1.2rem;
+  font-weight: 700;
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+  margin: 2rem auto;
+  display: block;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+}
+
+.start-playback-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(16, 185, 129, 0.4);
+}
+
+.start-playback-btn:active {
+  transform: translateY(0);
+}
+
+.mode-description {
+  text-align: center;
+  color: #999;
+  font-size: 0.95rem;
+  margin: 1rem 0;
+  font-style: italic;
 }
 
 .sheet-music-container {
