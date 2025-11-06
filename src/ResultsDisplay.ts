@@ -30,6 +30,14 @@ export class ResultsDisplay {
     const avgAccuracy = Math.abs(this.results.accuracy);
     const scoreRating = this.getScoreRating(this.results.score);
     
+    // Pre-process: match taps to notes BEFORE rendering
+    // This populates tap.noteIndex which is needed by renderTapList and renderTimingTable
+    if (this.pattern) {
+      this.sheetRenderer = new SheetMusicRenderer(document.createElement('div'), this.pattern);
+      this.sheetRenderer.render();
+      this.sheetRenderer.annotateWithResults(this.results);
+    }
+    
     this.container.innerHTML = `
       <div class="results-display">
         <h2>Test Results</h2>
@@ -75,11 +83,12 @@ export class ResultsDisplay {
           </div>
         ` : ''}
         
-        <div class="tap-details">
-          <h3>Tap Breakdown</h3>
-          <div class="tap-list">
-            ${this.renderTapList()}
-          </div>
+        <div class="timing-analytics">
+          <h3>📊 Timing Analytics</h3>
+          <details open>
+            <summary style="cursor: pointer; font-weight: bold; margin-bottom: 1rem;">Raw Timing Data</summary>
+            ${this.renderTimingTable()}
+          </details>
         </div>
         
         <div class="results-actions">
@@ -93,9 +102,10 @@ export class ResultsDisplay {
     if (this.pattern) {
       const sheetContainer = this.container.querySelector('#results-sheet-container') as HTMLElement;
       if (sheetContainer) {
+        // Re-create the renderer for the actual container and re-render
         this.sheetRenderer = new SheetMusicRenderer(sheetContainer, this.pattern);
         this.sheetRenderer.render();
-        // Annotate with test results
+        // Re-annotate (taps already have noteIndex set from pre-processing)
         this.sheetRenderer.annotateWithResults(this.results);
       }
     }
@@ -109,33 +119,87 @@ export class ResultsDisplay {
     });
   }
 
-  private renderTapList(): string {
-    if (this.results.taps.length === 0) {
-      return '<div class="no-taps">No taps recorded</div>';
-    }
-
-    return this.results.taps
-      .map((tap, index) => {
-        const accuracy = Math.abs(tap.accuracy);
-        const status = this.getTapStatus(accuracy);
-        const timing = tap.accuracy < 0 ? 'early' : 'late';
-        
-        return `
-          <div class="tap-item ${status}">
-            <span class="tap-number">#${index + 1}</span>
-            <span class="tap-timing">${accuracy.toFixed(0)}ms ${timing}</span>
-            <span class="tap-status">${status}</span>
-          </div>
-        `;
-      })
-      .join('');
-  }
-
   private getTapStatus(accuracy: number): string {
     if (accuracy < 50) return 'perfect';
     if (accuracy < 100) return 'good';
     if (accuracy < 150) return 'ok';
     return 'poor';
+  }
+
+  private renderTimingTable(): string {
+    // Build complete picture: all expected notes and which were hit
+    const rows: string[] = [];
+    
+    // Header
+    rows.push(`
+      <table class="timing-table">
+        <thead>
+          <tr>
+            <th>Note #</th>
+            <th>Expected Time</th>
+            <th>Actual Time</th>
+            <th>Difference</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+    `);
+    
+    // For each expected tap, show if it was hit and the timing
+    this.results.expectedTaps.forEach((expectedTime, index) => {
+      // Find if this note was hit
+      const tap = this.results.taps.find(t => t.noteIndex === index);
+      
+      if (tap) {
+        const diff = tap.accuracy;
+        const diffStr = diff === 0 ? '0ms' : 
+                       diff < 0 ? `${Math.abs(diff).toFixed(0)}ms early` :
+                       `${diff.toFixed(0)}ms late`;
+        const status = this.getTapStatus(Math.abs(diff));
+        
+        rows.push(`
+          <tr class="tap-hit ${status}">
+            <td><strong>Note ${index + 1}</strong></td>
+            <td>${expectedTime.toFixed(0)}ms</td>
+            <td>${tap.timestamp.toFixed(0)}ms</td>
+            <td>${diffStr}</td>
+            <td><span class="status-badge ${status}">${status.toUpperCase()}</span></td>
+          </tr>
+        `);
+      } else {
+        // Missed note
+        rows.push(`
+          <tr class="tap-missed">
+            <td><strong>Note ${index + 1}</strong></td>
+            <td>${expectedTime.toFixed(0)}ms</td>
+            <td>—</td>
+            <td>—</td>
+            <td><span class="status-badge missed">MISSED</span></td>
+          </tr>
+        `);
+      }
+    });
+    
+    rows.push(`
+        </tbody>
+      </table>
+    `);
+    
+    // Add summary stats
+    rows.push(`
+      <div class="analytics-summary">
+        <h4>Summary</h4>
+        <ul>
+          <li><strong>Total Expected Notes:</strong> ${this.results.expectedTaps.length}</li>
+          <li><strong>Notes Hit:</strong> ${this.results.tappedNotes}</li>
+          <li><strong>Notes Missed:</strong> ${this.results.missedNotes}</li>
+          <li><strong>Average Timing Offset:</strong> ${Math.abs(this.results.accuracy).toFixed(1)}ms</li>
+          <li><strong>Hit Rate:</strong> ${((this.results.tappedNotes / this.results.expectedTaps.length) * 100).toFixed(1)}%</li>
+        </ul>
+      </div>
+    `);
+    
+    return rows.join('');
   }
 
   private getScoreRating(score: number): string {

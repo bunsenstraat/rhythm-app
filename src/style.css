@@ -121,7 +121,24 @@ body {
   padding: 1rem;
   margin-bottom: 1.5rem;
   overflow-x: auto;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  min-height: 150px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  border: 2px solid #0f3460;
+}
+
+.sheet-music-container svg {
+  display: block;
+  margin: 0 auto;
+}
+
+/* Default to black for player view */
+.sheet-music-container svg path {
+  fill: #000;
+  stroke: #000;
+}
+
+.sheet-music-container svg line {
+  stroke: #000;
 }
 
 /* ABC.js highlight styling */
@@ -1345,6 +1362,152 @@ button:hover {
   color: #888;
 }
 
+/* Timing Analytics */
+.timing-analytics {
+  margin: 3rem 0;
+  background: #16213e;
+  border-radius: 12px;
+  padding: 1.5rem;
+}
+
+.timing-analytics h3 {
+  color: #ccc;
+  margin-bottom: 1rem;
+}
+
+.timing-analytics details summary {
+  color: #888;
+  padding: 0.5rem;
+  background: #0f3460;
+  border-radius: 6px;
+}
+
+.timing-analytics details[open] summary {
+  margin-bottom: 1rem;
+}
+
+.timing-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: #0f3460;
+  border-radius: 8px;
+  overflow: hidden;
+  font-size: 0.9rem;
+}
+
+.timing-table th {
+  background: #1a2942;
+  color: #888;
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 0.75rem;
+  padding: 0.75rem;
+  text-align: left;
+  border-bottom: 2px solid #16213e;
+}
+
+.timing-table td {
+  padding: 0.75rem;
+  border-bottom: 1px solid #16213e;
+  color: #ccc;
+}
+
+.timing-table tr:last-child td {
+  border-bottom: none;
+}
+
+.timing-table .tap-hit {
+  background: #0f3460;
+}
+
+.timing-table .tap-hit.perfect {
+  background: rgba(76, 175, 80, 0.1);
+}
+
+.timing-table .tap-hit.good {
+  background: rgba(139, 195, 74, 0.1);
+}
+
+.timing-table .tap-hit.ok {
+  background: rgba(255, 193, 7, 0.1);
+}
+
+.timing-table .tap-hit.poor {
+  background: rgba(244, 67, 54, 0.1);
+}
+
+.timing-table .tap-missed {
+  background: rgba(239, 68, 68, 0.15);
+}
+
+.status-badge {
+  display: inline-block;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.status-badge.perfect {
+  background: #4caf50;
+  color: white;
+}
+
+.status-badge.good {
+  background: #8bc34a;
+  color: white;
+}
+
+.status-badge.ok {
+  background: #ffc107;
+  color: #333;
+}
+
+.status-badge.poor {
+  background: #f44336;
+  color: white;
+}
+
+.status-badge.missed {
+  background: #ef4444;
+  color: white;
+}
+
+.analytics-summary {
+  margin-top: 1.5rem;
+  padding: 1rem;
+  background: #0f3460;
+  border-radius: 8px;
+}
+
+.analytics-summary h4 {
+  color: #888;
+  margin-bottom: 0.75rem;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+}
+
+.analytics-summary ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.analytics-summary li {
+  padding: 0.5rem 0;
+  color: #ccc;
+  border-bottom: 1px solid #16213e;
+}
+
+.analytics-summary li:last-child {
+  border-bottom: none;
+}
+
+.analytics-summary strong {
+  color: #888;
+  font-weight: 600;
+}
+
 /* Results Sheet Music */
 .results-sheet-music {
   margin: 3rem 0;
@@ -1398,6 +1561,18 @@ button:hover {
   border-radius: 8px;
   padding: 1rem;
   margin-top: 1rem;
+  border: 2px solid #0f3460;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+/* Default to black, but allow annotation colors to override */
+#results-sheet-container svg path {
+  fill: #000;
+  stroke: #000;
+}
+
+#results-sheet-container svg line {
+  stroke: #000;
 }
 
 /* Responsive */

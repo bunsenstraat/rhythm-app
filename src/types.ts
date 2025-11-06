@@ -20,6 +20,7 @@ export interface TapEvent {
   timestamp: number; // When the tap occurred (in ms)
   expectedTime: number; // When it should have occurred (in ms)
   accuracy: number; // How accurate the tap was (in ms, negative = early, positive = late)
+  noteIndex?: number; // Which note in the pattern this tap was matched to (for display)
 }
 
 export interface TestResults {

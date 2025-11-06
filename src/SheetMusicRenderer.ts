@@ -63,37 +63,90 @@ export class SheetMusicRenderer {
     
     console.log('[SheetMusic] Note expected times (using actual from RhythmPlayer):', Array.from(noteExpectedTimes.entries()));
     
-    // Build a map: note pattern index -> tap result
-    const noteHits = new Map<number, { hit: boolean; accuracy: number }>();
+    // Duration-based tolerance: faster notes = tighter tolerance
+    const beatDuration = 500; // ms per beat at 120 BPM (60/120 * 1000)
+    const beatValues: Record<string, number> = {
+      'w': 4, 'h': 2, 'q': 1, '8': 0.5, '16': 0.25, 'q3': 2/3, '83': 1/3
+    };
+    
+    const getToleranceForNote = (note: Note): number => {
+      const beats = beatValues[note.duration] * (note.dotted ? 1.5 : 1);
+      const noteDuration = beats * beatDuration;
+      // Tolerance = 30% of note duration, clamped between 50ms and 200ms
+      return Math.max(50, Math.min(200, noteDuration * 0.3));
+    };
+    
+    // NEW APPROACH: Note-centric matching with forward-only tap selection
+    // Taps can only be assigned in forward order - once we use tap N, 
+    // we can only look at taps N+1, N+2, ... for subsequent notes
+    let searchStartIndex = 0; // Only search taps from this index forward
+    const usedTapIndices = new Set<number>();
+    const noteHits = new Map<number, { hit: boolean; accuracy: number; tapIndex?: number }>();
     
     // Mark all notes as missed initially
     for (const [noteIndex, _] of noteExpectedTimes) {
       noteHits.set(noteIndex, { hit: false, accuracy: 0 });
     }
     
-    // Match each tap to its corresponding note by expectedTime
-    for (const tap of results.taps) {
-      // Find which note this tap corresponds to
-      let matchedNoteIndex = -1;
-      let minDiff = Infinity;
+    // For each expected note (in order), find the best matching unused tap
+    // ONLY searching forward from the last assigned tap
+    for (const [noteIndex, expectedTime] of noteExpectedTimes) {
+      const note = this.pattern.notes[noteIndex];
+      const tolerance = getToleranceForNote(note);
       
-      for (const [noteIndex, expectedTime] of noteExpectedTimes) {
-        const diff = Math.abs(tap.expectedTime - expectedTime);
-        if (diff < minDiff) {
-          minDiff = diff;
-          matchedNoteIndex = noteIndex;
+      let bestTapIndex = -1;
+      let bestDiff = Infinity;
+      
+      // Search through taps starting from searchStartIndex (forward only)
+      for (let tapIndex = searchStartIndex; tapIndex < results.taps.length; tapIndex++) {
+        if (usedTapIndices.has(tapIndex)) continue; // Skip already-used taps
+        
+        const tap = results.taps[tapIndex];
+        const diff = Math.abs(tap.timestamp - expectedTime);
+        
+        // Prefer taps that are closer in time, within this note's tolerance
+        if (diff < bestDiff && diff < tolerance) {
+          bestDiff = diff;
+          bestTapIndex = tapIndex;
+        }
+        
+        // Stop searching if we've gone too far past the expected time
+        // (optimization: no point checking taps that are way in the future)
+        if (tap.timestamp > expectedTime + tolerance) {
+          break;
         }
       }
       
-      if (matchedNoteIndex !== -1 && minDiff < timingTolerance) {
-        noteHits.set(matchedNoteIndex, {
+      // If we found a suitable tap, assign it to this note
+      if (bestTapIndex !== -1) {
+        const tap = results.taps[bestTapIndex];
+        usedTapIndices.add(bestTapIndex);
+        
+        // Move the search pointer forward: next note must use a tap >= this one
+        searchStartIndex = bestTapIndex + 1;
+        
+        // Calculate accuracy: positive = late, negative = early
+        const accuracy = tap.timestamp - expectedTime;
+        
+        noteHits.set(noteIndex, {
           hit: true,
-          accuracy: tap.accuracy
+          accuracy: accuracy,
+          tapIndex: bestTapIndex
         });
-        console.log(`[SheetMusic] Matched tap (expectedTime: ${tap.expectedTime}ms, minDiff: ${minDiff}ms) to note ${matchedNoteIndex} (accuracy: ${tap.accuracy}ms)`);
+        
+        // Mark the tap with which note it matched to
+        tap.noteIndex = noteIndex;
+        
+        console.log(`[SheetMusic] Note ${noteIndex} (expected: ${expectedTime}ms, tolerance: ${tolerance.toFixed(0)}ms) matched to tap ${bestTapIndex} (actual: ${tap.timestamp}ms, diff: ${bestDiff.toFixed(0)}ms, accuracy: ${accuracy.toFixed(0)}ms)`);
       } else {
-        console.log(`[SheetMusic] Could not match tap (expectedTime: ${tap.expectedTime}ms) - minDiff: ${minDiff}ms exceeds tolerance ${timingTolerance}ms`);
+        console.log(`[SheetMusic] Note ${noteIndex} (expected: ${expectedTime}ms, tolerance: ${tolerance.toFixed(0)}ms) - NO MATCHING TAP FOUND (missed)`);
       }
+    }
+    
+    // Report unused taps (extra taps that didn't match any note)
+    const unusedTaps = results.taps.filter((_, idx) => !usedTapIndices.has(idx));
+    if (unusedTaps.length > 0) {
+      console.log(`[SheetMusic] ${unusedTaps.length} extra taps that didn't match any note:`, unusedTaps.map(t => t.timestamp));
     }
     
     console.log('[SheetMusic] Note hits map:', Array.from(noteHits.entries()));
@@ -124,21 +177,21 @@ export class SheetMusicRenderer {
           
           console.log(`[SheetMusic] Coloring note at pattern index ${i}, visual index ${visualNoteIndex}: ${color} (hit: ${hitInfo.hit}, accuracy: ${hitInfo.accuracy}ms)`);
           
-          // Find all paths in this note group
+          // Find all paths in this note group and use inline styles for highest specificity
           const notePaths = el.querySelectorAll('path');
           console.log(`[SheetMusic] Found ${notePaths.length} paths in note element`);
           
           notePaths.forEach(path => {
-            path.setAttribute('fill', color);
-            path.setAttribute('stroke', color);
+            (path as SVGPathElement).style.fill = color;
+            (path as SVGPathElement).style.stroke = color;
           });
           
           // Also color child elements with fill attribute
           const fillElements = el.querySelectorAll('[fill]');
           fillElements.forEach(fillEl => {
-            (fillEl as SVGElement).setAttribute('fill', color);
+            (fillEl as SVGElement).style.fill = color;
             if ((fillEl as SVGElement).hasAttribute('stroke')) {
-              (fillEl as SVGElement).setAttribute('stroke', color);
+              (fillEl as SVGElement).style.stroke = color;
             }
           });
         }
