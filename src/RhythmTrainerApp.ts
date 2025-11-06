@@ -6,6 +6,9 @@ import { PatternDesigner } from './PatternDesigner';
 import { RhythmPlayer } from './RhythmPlayer';
 import { ResultsDisplay } from './ResultsDisplay';
 import { Toast } from './Toast';
+import { ChallengeGenerator } from './ChallengeGenerator';
+import abcjs from 'abcjs';
+import type { NoteDuration, NoteType } from './types';
 
 export class RhythmTrainerApp {
   private container: HTMLElement;
@@ -40,9 +43,38 @@ export class RhythmTrainerApp {
           <p class="app-subtitle">Design, Practice, and Perfect Your Rhythm</p>
         </header>
         
+        <nav class="app-nav">
+          <button id="nav-designer" class="nav-btn active">📝 Designer</button>
+          <button id="nav-challenge" class="nav-btn">🎯 Challenge</button>
+          <button id="nav-library" class="nav-btn">📚 Library</button>
+        </nav>
+        
         <main class="app-main" id="app-main"></main>
       </div>
     `;
+
+    // Navigation event listeners
+    document.getElementById('nav-designer')?.addEventListener('click', () => {
+      this.updateActiveNav('nav-designer');
+      this.showDesigner();
+    });
+    
+    document.getElementById('nav-challenge')?.addEventListener('click', () => {
+      this.updateActiveNav('nav-challenge');
+      this.showChallengeSelection();
+    });
+    
+    document.getElementById('nav-library')?.addEventListener('click', () => {
+      this.updateActiveNav('nav-library');
+      this.showLibrary();
+    });
+  }
+
+  private updateActiveNav(activeId: string) {
+    document.querySelectorAll('.nav-btn').forEach(btn => {
+      btn.classList.remove('active');
+    });
+    document.getElementById(activeId)?.classList.add('active');
   }
 
   private showDesigner() {
@@ -67,7 +99,10 @@ export class RhythmTrainerApp {
         </div>
       </div>
       
-      <button id="start-button" class="primary-button">Start Practice</button>
+      <div class="action-buttons">
+        <button id="start-button" class="primary-button">Start Practice</button>
+        <button id="challenge-button" class="secondary-button">🎯 Challenge Mode</button>
+      </div>
     `;
 
     const designerContainer = document.getElementById('designer-container')!;
@@ -106,6 +141,11 @@ export class RhythmTrainerApp {
       } else {
         Toast.error('Please design a rhythm pattern with at least one note!');
       }
+    });
+    
+    // Challenge mode button
+    document.getElementById('challenge-button')?.addEventListener('click', () => {
+      this.showChallengeSelection();
     });
   }
   
@@ -196,5 +236,272 @@ export class RhythmTrainerApp {
       score: Math.max(0, Math.min(100, score)),
       taps
     };
+  }
+  
+  private showChallengeSelection() {
+    const main = document.getElementById('app-main')!;
+    main.innerHTML = `
+      <div class="challenge-selection">
+        <h2>🎯 Challenge Mode</h2>
+        <p class="challenge-description">Test your skills with randomly generated 8-bar patterns!</p>
+        
+        <div class="difficulty-grid">
+          <div class="difficulty-card" data-difficulty="easy">
+            <div class="difficulty-icon">🌱</div>
+            <h3>Easy</h3>
+            <p>Quarter and half notes<br>Simple rhythms</p>
+            <button class="start-challenge-btn" data-difficulty="easy">Start Easy</button>
+          </div>
+          
+          <div class="difficulty-card" data-difficulty="medium">
+            <div class="difficulty-icon">🎵</div>
+            <h3>Medium</h3>
+            <p>Eighth notes and rests<br>Basic syncopation</p>
+            <button class="start-challenge-btn" data-difficulty="medium">Start Medium</button>
+          </div>
+          
+          <div class="difficulty-card" data-difficulty="hard">
+            <div class="difficulty-icon">🔥</div>
+            <h3>Hard</h3>
+            <p>Sixteenth notes and ties<br>Complex syncopation</p>
+            <button class="start-challenge-btn" data-difficulty="hard">Start Hard</button>
+          </div>
+          
+          <div class="difficulty-card" data-difficulty="expert">
+            <div class="difficulty-icon">⚡</div>
+            <h3>Expert</h3>
+            <p>Triplets and dotted notes<br>Advanced rhythms</p>
+            <button class="start-challenge-btn" data-difficulty="expert">Start Expert</button>
+          </div>
+        </div>
+        
+        <button id="back-to-designer-btn" class="secondary-button" style="margin-top: 2rem;">← Back to Designer</button>
+      </div>
+    `;
+    
+    // Add event listeners for challenge buttons
+    document.querySelectorAll('.start-challenge-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const difficulty = (e.target as HTMLElement).dataset.difficulty as 'easy' | 'medium' | 'hard' | 'expert';
+        this.startChallenge(difficulty);
+      });
+    });
+    
+    document.getElementById('back-to-designer-btn')?.addEventListener('click', () => {
+      this.updateActiveNav('nav-designer');
+      this.showDesigner();
+    });
+  }
+  
+  private async showLibrary() {
+    const main = document.getElementById('app-main')!;
+    main.innerHTML = `
+      <div class="pattern-library">
+        <h2>📚 Pattern Library</h2>
+        <p class="library-description">Load and practice from our collection of rhythm patterns</p>
+        
+        <div class="library-filters">
+          <button class="filter-btn active" data-category="all">All</button>
+          <button class="filter-btn" data-category="beginner">Beginner</button>
+          <button class="filter-btn" data-category="intermediate">Intermediate</button>
+          <button class="filter-btn" data-category="advanced">Advanced</button>
+        </div>
+        
+        <div id="library-grid" class="library-grid">
+          <div class="loading-message">Loading patterns...</div>
+        </div>
+      </div>
+    `;
+
+    // Load pattern index
+    try {
+      const response = await fetch('/patterns/index.json');
+      const data = await response.json();
+      const patterns = data.patterns || [];
+      this.renderLibraryPatterns(patterns, 'all');
+
+      // Filter event listeners
+      document.querySelectorAll('.filter-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          const category = (e.target as HTMLElement).dataset.category || 'all';
+          document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+          (e.target as HTMLElement).classList.add('active');
+          this.renderLibraryPatterns(patterns, category);
+        });
+      });
+    } catch (error) {
+      console.error('Failed to load pattern library:', error);
+      document.getElementById('library-grid')!.innerHTML = 
+        '<div class="error-message">Failed to load pattern library</div>';
+    }
+  }
+
+  private renderLibraryPatterns(patterns: any[], category: string) {
+    const filteredPatterns = category === 'all' 
+      ? patterns 
+      : patterns.filter(p => p.category === category);
+
+    const grid = document.getElementById('library-grid')!;
+    
+    if (filteredPatterns.length === 0) {
+      grid.innerHTML = '<div class="empty-message">No patterns found in this category</div>';
+      return;
+    }
+
+    grid.innerHTML = filteredPatterns.map((p, index) => `
+      <div class="library-pattern-card" data-index="${index}" data-file="${p.filename}">
+        <div class="pattern-category ${p.category}">${p.category}</div>
+        <h3>${p.name || 'Untitled'}</h3>
+        <p>${p.bars || 4} bars • ${p.timeSignature || '4/4'}</p>
+        <button class="load-pattern-btn" data-file="${p.filename}">Load Pattern</button>
+      </div>
+    `).join('');
+
+    // Add event listeners for load buttons
+    document.querySelectorAll('.load-pattern-btn').forEach(btn => {
+      btn.addEventListener('click', async (e) => {
+        e.stopPropagation();
+        const file = (e.target as HTMLElement).dataset.file;
+        await this.loadPatternFromLibrary(file!);
+      });
+    });
+  }
+
+  private async loadPatternFromLibrary(file: string) {
+    try {
+      const response = await fetch(`/patterns/${file}`);
+      
+      if (file.endsWith('.abc')) {
+        // ABC files need to be parsed
+        const abcText = await response.text();
+        const pattern = this.parseABCFile(abcText);
+        if (pattern) {
+          this.pattern = pattern;
+          Toast.success(`Loaded ABC pattern from ${file}`, 2000);
+          this.updateActiveNav('nav-designer');
+          this.showDesigner();
+        }
+        return;
+      }
+      
+      const data = await response.json();
+      // Handle nested structure: some JSONs have pattern.pattern, others are just pattern
+      this.pattern = data.pattern || data;
+      Toast.success(`Loaded: ${data.name || data.title || 'Pattern'}`, 2000);
+      this.updateActiveNav('nav-designer');
+      this.showDesigner();
+    } catch (error) {
+      console.error('Failed to load pattern:', error);
+      Toast.error('Failed to load pattern', 2000);
+    }
+  }
+
+  private parseABCFile(abc: string): RhythmPattern | null {
+    const notes: Array<{ duration: NoteDuration; type: NoteType; dotted?: boolean; tie?: boolean }> = [];
+    
+    try {
+      // Use abcjs's built-in parser
+      const parsed = abcjs.parseOnly(abc);
+      
+      if (!parsed || !parsed[0]) {
+        throw new Error('Failed to parse ABC notation');
+      }
+      
+      const tune = parsed[0];
+      
+      // Count bars from the parsed structure
+      let barCount = 0;
+      if (tune.lines) {
+        for (const line of tune.lines) {
+          if (line.staff && line.staff[0] && line.staff[0].voices) {
+            for (const voice of line.staff[0].voices) {
+              // Count bar lines in this voice
+              const bars = voice.filter((el: any) => el.el_type === 'bar');
+              barCount += bars.length;
+            }
+          }
+        }
+      }
+      
+      // Extract notes from the parsed structure
+      if (tune.lines) {
+        for (const line of tune.lines) {
+          if (line.staff && line.staff[0] && line.staff[0].voices) {
+            for (const voice of line.staff[0].voices) {
+              for (const element of voice) {
+                // Skip bar lines and other non-note elements
+                if (element.el_type === 'bar') continue;
+                
+                // Handle notes and rests
+                if (element.el_type === 'note') {
+                  // Check if it's a rest
+                  const isRest = element.rest;
+                  
+                  // Get duration - abcjs uses duration as a fraction of a whole note
+                  const abcDuration = element.duration || 0.25;
+                  let duration: NoteDuration = 'q';
+                  let dotted = false;
+                  
+                  // Convert ABC duration to our NoteDuration
+                  if (Math.abs(abcDuration - 1.0) < 0.01) {
+                    duration = 'w';
+                  } else if (Math.abs(abcDuration - 0.75) < 0.01) {
+                    duration = 'h';
+                    dotted = true;
+                  } else if (Math.abs(abcDuration - 0.5) < 0.01) {
+                    duration = 'h';
+                  } else if (Math.abs(abcDuration - 0.375) < 0.01) {
+                    duration = 'q';
+                    dotted = true;
+                  } else if (Math.abs(abcDuration - 0.25) < 0.01) {
+                    duration = 'q';
+                  } else if (Math.abs(abcDuration - 0.1875) < 0.01) {
+                    duration = '8';
+                    dotted = true;
+                  } else if (Math.abs(abcDuration - 0.125) < 0.01) {
+                    duration = '8';
+                  } else if (Math.abs(abcDuration - 0.09375) < 0.01) {
+                    duration = '16';
+                    dotted = true;
+                  } else if (Math.abs(abcDuration - 0.0625) < 0.01) {
+                    duration = '16';
+                  }
+                  
+                  // Check for ties
+                  const hasTie = element.startTie || element.tie || (element.pitches && element.pitches[0] && element.pitches[0].startTie);
+                  
+                  notes.push({
+                    duration,
+                    type: isRest ? 'rest' : 'note',
+                    dotted,
+                    tie: hasTie || false
+                  });
+                }
+              }
+            }
+          }
+        }
+      }
+      
+      // Create pattern from parsed notes
+      return {
+        bars: barCount > 0 ? barCount : 4,
+        beatsPerBar: 4, // Default to 4/4
+        notes: notes
+      };
+      
+    } catch (error) {
+      console.error('Error parsing ABC:', error);
+      Toast.error('Failed to parse ABC notation. Please check the format.');
+      return null;
+    }
+  }
+  
+  private startChallenge(difficulty: 'easy' | 'medium' | 'hard' | 'expert') {
+    const challenge = ChallengeGenerator.generateChallenge(difficulty);
+    this.pattern = challenge.pattern;
+    
+    Toast.success(`${challenge.title}: ${challenge.description}`, 4000);
+    this.startPractice();
   }
 }
