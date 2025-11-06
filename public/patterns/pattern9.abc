@@ -1,0 +1,15 @@
+X:1
+T:Pattern9
+C:Composer / arranger
+%%scale 0.83
+%%pagewidth 21.01cm
+%%leftmargin 1.50cm
+%%rightmargin 1.50cm
+L:1/8
+M:4/4
+I:linebreak $
+K:C
+V:1 treble nm="Piano" snm="Pno."
+V:1
+ c c2 c- c c2 c- | c3 c- c2 z2 | c c2 c- c c2 c- | c4 z4 | z AAA- A B2 A- |$ A3 A- A2 z2 |$ %6
+ z4 z AAA- | A A2 A A2 z2 |] %8

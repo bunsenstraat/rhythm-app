@@ -1266,11 +1266,15 @@ export class PatternDesigner {
                     duration = '16';
                   }
                   
+                  // Check for ties - abcjs may store this in different ways
+                  // The tie connects this note to the NEXT note
+                  const hasTie = element.startTie || element.tie || (element.pitches && element.pitches[0] && element.pitches[0].startTie);
+                  
                   notes.push({
                     duration,
                     type: isRest ? 'rest' : 'note',
                     dotted,
-                    tie: element.startTie || false
+                    tie: hasTie || false
                   });
                 }
               }
