@@ -27,7 +27,7 @@ export class SheetMusicRenderer {
    * - Orange: Hit but timing was off (early/late)
    * - Red: Missed completely
    */
-  annotateWithResults(results: TestResults, timingTolerance: number = 100) {
+  annotateWithResults(results: TestResults, timingTolerance: number = 500) {
     console.log('[SheetMusic] Annotating with test results:', results);
     console.log('[SheetMusic] Pattern notes:', this.pattern.notes);
     
@@ -85,18 +85,20 @@ export class SheetMusicRenderer {
       
       for (const [noteIndex, expectedTime] of noteExpectedTimes) {
         const diff = Math.abs(tap.expectedTime - expectedTime);
-        if (diff < minDiff && diff < timingTolerance) {
+        if (diff < minDiff) {
           minDiff = diff;
           matchedNoteIndex = noteIndex;
         }
       }
       
-      if (matchedNoteIndex !== -1) {
+      if (matchedNoteIndex !== -1 && minDiff < timingTolerance) {
         noteHits.set(matchedNoteIndex, {
           hit: true,
           accuracy: tap.accuracy
         });
-        console.log(`[SheetMusic] Matched tap (expectedTime: ${tap.expectedTime}ms) to note ${matchedNoteIndex} (accuracy: ${tap.accuracy}ms)`);
+        console.log(`[SheetMusic] Matched tap (expectedTime: ${tap.expectedTime}ms, minDiff: ${minDiff}ms) to note ${matchedNoteIndex} (accuracy: ${tap.accuracy}ms)`);
+      } else {
+        console.log(`[SheetMusic] Could not match tap (expectedTime: ${tap.expectedTime}ms) - minDiff: ${minDiff}ms exceeds tolerance ${timingTolerance}ms`);
       }
     }
     
