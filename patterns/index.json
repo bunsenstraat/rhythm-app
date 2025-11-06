@@ -1,0 +1,14 @@
+{
+  "patterns": [
+    {
+      "filename": "half-and-whole-notes.json",
+      "category": "beginner",
+      "name": "Half and Whole Notes"
+    },
+    {
+      "filename": "pattern9.abc",
+      "category": "intermediate",
+      "name": "Pattern9"
+    }
+  ]
+}
