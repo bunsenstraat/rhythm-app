@@ -27,7 +27,7 @@ export class SheetMusicRenderer {
    * - Orange: Hit but timing was off (early/late)
    * - Red: Missed completely
    */
-  annotateWithResults(results: TestResults, timingTolerance: number = 100) {
+  annotateWithResults(results: TestResults) {
     console.log('[SheetMusic] Annotating with test results:', results);
     console.log('[SheetMusic] Pattern notes:', this.pattern.notes);
     console.log('[SheetMusic] Expected taps from RhythmPlayer:', results.expectedTaps);
@@ -43,8 +43,8 @@ export class SheetMusicRenderer {
     }
     
     // Use the actual expected tap times from RhythmPlayer instead of recalculating
-    // Map pattern note indices to expected tap times
-    const noteExpectedTimes = new Map<number, number>();
+    // Map pattern note indices to expected tap times AND expectedTaps index
+    const noteExpectedTimes = new Map<number, { expectedTime: number; expectedTapIndex: number }>();
     let expectedTapIndex = 0;
     
     for (let i = 0; i < this.pattern.notes.length; i++) {
@@ -55,7 +55,10 @@ export class SheetMusicRenderer {
       // Only notes that should be tapped (not rests, not tied from previous)
       if (note.type === 'note' && !isTiedFromPrevious) {
         if (expectedTapIndex < results.expectedTaps.length) {
-          noteExpectedTimes.set(i, results.expectedTaps[expectedTapIndex]);
+          noteExpectedTimes.set(i, {
+            expectedTime: results.expectedTaps[expectedTapIndex],
+            expectedTapIndex: expectedTapIndex
+          });
           expectedTapIndex++;
         }
       }
@@ -90,9 +93,11 @@ export class SheetMusicRenderer {
     
     // For each expected note (in order), find the best matching unused tap
     // ONLY searching forward from the last assigned tap
-    for (const [noteIndex, expectedTime] of noteExpectedTimes) {
+    for (const [noteIndex, noteInfo] of noteExpectedTimes) {
       const note = this.pattern.notes[noteIndex];
       const tolerance = getToleranceForNote(note);
+      const expectedTime = noteInfo.expectedTime;
+      const expectedTapIdx = noteInfo.expectedTapIndex;
       
       let bestTapIndex = -1;
       let bestDiff = Infinity;
@@ -134,12 +139,13 @@ export class SheetMusicRenderer {
           tapIndex: bestTapIndex
         });
         
-        // Mark the tap with which note it matched to
-        tap.noteIndex = noteIndex;
+        // Mark the tap with the expectedTaps index (NOT pattern index!)
+        // This is what the timing table uses
+        tap.noteIndex = expectedTapIdx;
         
-        console.log(`[SheetMusic] Note ${noteIndex} (expected: ${expectedTime}ms, tolerance: ${tolerance.toFixed(0)}ms) matched to tap ${bestTapIndex} (actual: ${tap.timestamp}ms, diff: ${bestDiff.toFixed(0)}ms, accuracy: ${accuracy.toFixed(0)}ms)`);
+        console.log(`[SheetMusic] Note ${noteIndex} (expectedTapsIndex: ${expectedTapIdx}, expected: ${expectedTime}ms, tolerance: ${tolerance.toFixed(0)}ms) matched to tap ${bestTapIndex} (actual: ${tap.timestamp}ms, diff: ${bestDiff.toFixed(0)}ms, accuracy: ${accuracy.toFixed(0)}ms)`);
       } else {
-        console.log(`[SheetMusic] Note ${noteIndex} (expected: ${expectedTime}ms, tolerance: ${tolerance.toFixed(0)}ms) - NO MATCHING TAP FOUND (missed)`);
+        console.log(`[SheetMusic] Note ${noteIndex} (expectedTapsIndex: ${expectedTapIdx}, expected: ${expectedTime}ms, tolerance: ${tolerance.toFixed(0)}ms) - NO MATCHING TAP FOUND (missed)`);
       }
     }
     
@@ -151,8 +157,13 @@ export class SheetMusicRenderer {
     
     console.log('[SheetMusic] Note hits map:', Array.from(noteHits.entries()));
     
+    // Build a map of which pattern notes should be tappable (for coloring)
+    const tappableNoteIndices = Array.from(noteExpectedTimes.keys());
+    console.log('[SheetMusic] Tappable note indices:', tappableNoteIndices);
+    console.log('[SheetMusic] Visual note elements found:', elements.length);
+    
     // Apply colors to the SVG elements
-    // Match visual notes to pattern notes, skipping tied notes
+    // Match visual notes to pattern notes, skipping tied notes and rests
     let visualNoteIndex = 0;
     
     for (let i = 0; i < this.pattern.notes.length; i++) {
@@ -162,38 +173,43 @@ export class SheetMusicRenderer {
       
       if (note.type === 'note') {
         // Only color notes that should have been tapped (not tied from previous)
-        if (!isTiedFromPrevious && visualNoteIndex < elements.length && noteHits.has(i)) {
-          const el = elements[visualNoteIndex];
-          const hitInfo = noteHits.get(i)!;
-          
-          let color = '#000000';
-          if (!hitInfo.hit) {
-            color = '#ef4444'; // Red - missed
-          } else if (Math.abs(hitInfo.accuracy) < timingTolerance / 2) {
-            color = '#22c55e'; // Green - perfect
-          } else {
-            color = '#f59e0b'; // Orange - timing off
-          }
-          
-          console.log(`[SheetMusic] Coloring note at pattern index ${i}, visual index ${visualNoteIndex}: ${color} (hit: ${hitInfo.hit}, accuracy: ${hitInfo.accuracy}ms)`);
-          
-          // Find all paths in this note group and use inline styles for highest specificity
-          const notePaths = el.querySelectorAll('path');
-          console.log(`[SheetMusic] Found ${notePaths.length} paths in note element`);
-          
-          notePaths.forEach(path => {
-            (path as SVGPathElement).style.fill = color;
-            (path as SVGPathElement).style.stroke = color;
-          });
-          
-          // Also color child elements with fill attribute
-          const fillElements = el.querySelectorAll('[fill]');
-          fillElements.forEach(fillEl => {
-            (fillEl as SVGElement).style.fill = color;
-            if ((fillEl as SVGElement).hasAttribute('stroke')) {
-              (fillEl as SVGElement).style.stroke = color;
+        if (!isTiedFromPrevious && visualNoteIndex < elements.length) {
+          // Check if this pattern note index has a hit record
+          if (noteHits.has(i)) {
+            const el = elements[visualNoteIndex];
+            const hitInfo = noteHits.get(i)!;
+            
+            let color = '#000000';
+            if (!hitInfo.hit) {
+              color = '#ef4444'; // Red - missed
+            } else if (Math.abs(hitInfo.accuracy) < 50) {
+              color = '#22c55e'; // Green - perfect (< 50ms)
+            } else {
+              color = '#f59e0b'; // Orange - timing off
             }
-          });
+            
+            console.log(`[SheetMusic] Coloring visual note ${visualNoteIndex} (pattern index ${i}): ${color} (hit: ${hitInfo.hit}, accuracy: ${hitInfo.accuracy}ms)`);
+            
+            // Find all paths in this note group and use inline styles for highest specificity
+            const notePaths = el.querySelectorAll('path');
+            console.log(`[SheetMusic] Found ${notePaths.length} paths in note element`);
+            
+            notePaths.forEach(path => {
+              (path as SVGPathElement).style.fill = color;
+              (path as SVGPathElement).style.stroke = color;
+            });
+            
+            // Also color child elements with fill attribute
+            const fillElements = el.querySelectorAll('[fill]');
+            fillElements.forEach(fillEl => {
+              (fillEl as SVGElement).style.fill = color;
+              if ((fillEl as SVGElement).hasAttribute('stroke')) {
+                (fillEl as SVGElement).style.stroke = color;
+              }
+            });
+          } else {
+            console.log(`[SheetMusic] Visual note ${visualNoteIndex} (pattern index ${i}) - NO HIT INFO (unexpected)`);
+          }
         }
         visualNoteIndex++;
       }
