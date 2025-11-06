@@ -1156,8 +1156,10 @@ button:hover {
 .progress-fill {
   height: 100%;
   background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
-  transition: width 0.1s linear;
-  width: 0;
+  transform-origin: left;
+  transform: scaleX(0);
+  will-change: transform;
+  width: 100%;
 }
 
 .current-beat {
@@ -1191,7 +1193,8 @@ button:hover {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   border: 5px solid #764ba2;
   box-shadow: 0 10px 40px rgba(102, 126, 234, 0.4);
-  transition: all 0.1s;
+  transition: transform 0.05s ease-out, box-shadow 0.05s ease-out;
+  will-change: transform;
   /* Prevent zoom and text selection on mobile */
   touch-action: manipulation;
   -webkit-tap-highlight-color: transparent;

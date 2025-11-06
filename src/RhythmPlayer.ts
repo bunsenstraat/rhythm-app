@@ -13,13 +13,15 @@ export class RhythmPlayer {
   private isPlaying: boolean = false;
   private startTime: number = 0;
   private currentNoteIndex: number = 0;
-  private intervalId: number | null = null;
+  private animationFrameId: number | null = null;
   private taps: TapEvent[] = [];
   private expectedTaps: number[] = [];
   private noteTimes: number[] = []; // Actual time for each note in ms
   private onComplete: (taps: TapEvent[], expectedTaps: number[]) => void;
   private sheetMusicRenderer: SheetMusicRenderer | null = null;
   private practiceMode: boolean = true; // Practice mode plays pattern, test mode only plays metronome
+  private lastDisplayedTitle: string = '';
+  private lastDisplayedNote: number = -1;
 
   constructor(
     container: HTMLElement,
@@ -255,31 +257,41 @@ export class RhythmPlayer {
       });
     }
     
-    // Update UI
-    this.intervalId = window.setInterval(() => {
+    // Update UI using requestAnimationFrame for smooth 60fps updates
+    // Cache DOM elements once
+    const progressFill = this.container.querySelector('#progress-fill') as HTMLElement;
+    const noteNumber = this.container.querySelector('#note-number') as HTMLElement;
+    const playerTitle = this.container.querySelector('#player-title') as HTMLElement;
+    
+    const updateUI = () => {
+      if (!this.isPlaying) return;
+      
       const elapsed = Date.now() - this.startTime;
       const totalWithCountIn = countInDuration + totalDuration;
       const progress = Math.min(elapsed / totalWithCountIn, 1);
-      
-      const progressFill = this.container.querySelector('#progress-fill') as HTMLElement;
-      const noteNumber = this.container.querySelector('#note-number') as HTMLElement;
-      const playerTitle = this.container.querySelector('#player-title') as HTMLElement;
       
       // Update title based on count-in or pattern
       if (elapsed < countInDuration) {
         // During count-in
         const countBeat = Math.floor(elapsed / beatDuration) + 1;
-        if (playerTitle) {
-          const modeText = this.practiceMode ? 'Practice' : 'Test';
-          playerTitle.textContent = `${modeText} - Count In: ${countBeat}`;
+        const modeText = this.practiceMode ? 'Practice' : 'Test';
+        const newTitle = `${modeText} - Count In: ${countBeat}`;
+        
+        // Only update DOM if value changed
+        if (playerTitle && this.lastDisplayedTitle !== newTitle) {
+          playerTitle.textContent = newTitle;
+          this.lastDisplayedTitle = newTitle;
         }
-        if (noteNumber) {
+        if (noteNumber && this.lastDisplayedNote !== 0) {
           noteNumber.textContent = '0';
+          this.lastDisplayedNote = 0;
         }
       } else {
         // During pattern
-        if (playerTitle) {
-          playerTitle.textContent = 'Tap Along!';
+        const newTitle = 'Tap Along!';
+        if (playerTitle && this.lastDisplayedTitle !== newTitle) {
+          playerTitle.textContent = newTitle;
+          this.lastDisplayedTitle = newTitle;
         }
         
         // Find current note based on time
@@ -292,24 +304,33 @@ export class RhythmPlayer {
         }
         this.currentNoteIndex = Math.min(currentNote, this.pattern.notes.length);
         
-        if (noteNumber) {
+        // Only update DOM if note changed
+        if (noteNumber && this.lastDisplayedNote !== this.currentNoteIndex) {
           noteNumber.textContent = this.currentNoteIndex.toString();
-        }
-        
-        // Update sheet music highlight
-        if (this.sheetMusicRenderer && this.currentNoteIndex > 0) {
-          this.sheetMusicRenderer.setCurrentNote(this.currentNoteIndex - 1);
+          this.lastDisplayedNote = this.currentNoteIndex;
+          
+          // Update sheet music highlight only when note changes
+          if (this.sheetMusicRenderer && this.currentNoteIndex > 0) {
+            this.sheetMusicRenderer.setCurrentNote(this.currentNoteIndex - 1);
+          }
         }
       }
       
+      // Progress bar updates every frame (smooth animation)
       if (progressFill) {
-        progressFill.style.width = `${progress * 100}%`;
+        progressFill.style.transform = `scaleX(${progress})`;
       }
       
       if (progress >= 1) {
         this.stop();
+      } else {
+        // Continue animation loop
+        this.animationFrameId = requestAnimationFrame(updateUI);
       }
-    }, 50);
+    };
+    
+    // Start the animation loop
+    this.animationFrameId = requestAnimationFrame(updateUI);
   }
 
   private handleTap() {
@@ -372,10 +393,14 @@ export class RhythmPlayer {
   private stop() {
     this.isPlaying = false;
     
-    if (this.intervalId) {
-      clearInterval(this.intervalId);
-      this.intervalId = null;
+    if (this.animationFrameId !== null) {
+      cancelAnimationFrame(this.animationFrameId);
+      this.animationFrameId = null;
     }
+    
+    // Reset cached values
+    this.lastDisplayedTitle = '';
+    this.lastDisplayedNote = -1;
     
     document.removeEventListener('keydown', this.handleKeyPress);
     
