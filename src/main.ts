@@ -1,3 +1,4 @@
+import '@fontsource/bravura/index.css';
 import './style.css'
 import { RhythmTrainerApp } from './RhythmTrainerApp'
 

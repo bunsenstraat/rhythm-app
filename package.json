@@ -18,6 +18,7 @@
     "vite": "^7.1.7"
   },
   "dependencies": {
+    "@fontsource/bravura": "^5.2.5",
     "abcjs": "^6.5.2",
     "vexflow": "^5.0.0"
   }
