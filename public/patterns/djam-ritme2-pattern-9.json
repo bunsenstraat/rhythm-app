@@ -1,0 +1,136 @@
+{
+  "name": "DJAM Ritme2 Pattern 9",
+  "description": "DJAM rhythm pattern 9 in 4/4 time - syncopated world music groove",
+  "difficulty": "advanced",
+  "pattern": {
+    "bars": 4,
+    "beatsPerBar": 4,
+    "notes": [
+      {
+        "duration": "8",
+        "type": "note"
+      },
+      {
+        "duration": "8",
+        "type": "rest"
+      },
+      {
+        "duration": "8",
+        "type": "note"
+      },
+      {
+        "duration": "8",
+        "type": "note"
+      },
+      {
+        "duration": "8",
+        "type": "rest"
+      },
+      {
+        "duration": "8",
+        "type": "note"
+      },
+      {
+        "duration": "8",
+        "type": "note"
+      },
+      {
+        "duration": "8",
+        "type": "rest"
+      },
+      {
+        "duration": "8",
+        "type": "note",
+        "dotted": true
+      },
+      {
+        "duration": "8",
+        "type": "note"
+      },
+      {
+        "duration": "8",
+        "type": "note"
+      },
+      {
+        "duration": "8",
+        "type": "rest"
+      },
+      {
+        "duration": "8",
+        "type": "note"
+      },
+      {
+        "duration": "8",
+        "type": "note"
+      },
+      {
+        "duration": "8",
+        "type": "rest"
+      },
+      {
+        "duration": "16",
+        "type": "rest"
+      },
+      {
+        "duration": "8",
+        "type": "note"
+      },
+      {
+        "duration": "8",
+        "type": "note"
+      },
+      {
+        "duration": "q",
+        "type": "rest"
+      },
+      {
+        "duration": "8",
+        "type": "note"
+      },
+      {
+        "duration": "8",
+        "type": "rest"
+      },
+      {
+        "duration": "8",
+        "type": "note"
+      },
+      {
+        "duration": "16",
+        "type": "note"
+      },
+      {
+        "duration": "16",
+        "type": "note"
+      },
+      {
+        "duration": "16",
+        "type": "note"
+      },
+      {
+        "duration": "16",
+        "type": "note"
+      },
+      {
+        "duration": "8",
+        "type": "note"
+      },
+      {
+        "duration": "8",
+        "type": "note"
+      },
+      {
+        "duration": "8",
+        "type": "rest"
+      },
+      {
+        "duration": "q",
+        "type": "rest"
+      },
+      {
+        "duration": "q",
+        "type": "rest"
+      }
+    ]
+  }
+}

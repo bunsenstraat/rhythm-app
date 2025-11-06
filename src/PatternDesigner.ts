@@ -5,6 +5,7 @@ import { SheetMusicRenderer } from './SheetMusicRenderer';
 import { AudioEngine } from './AudioEngine';
 import { Toast } from './Toast';
 import { RhythmValidator } from './RhythmValidator';
+import abcjs from 'abcjs';
 
 export class PatternDesigner {
   private container: HTMLElement;
@@ -131,6 +132,23 @@ export class PatternDesigner {
           </div>
           <div id="saved-patterns-list" class="saved-patterns-list"></div>
           <div id="preset-patterns-list" class="preset-patterns-list"></div>
+          
+          <h3>ABC Notation Tools</h3>
+          <div class="abc-tools">
+            <button id="export-abc-btn" class="mgmt-btn">📤 Export to ABC</button>
+            <button id="import-abc-btn" class="mgmt-btn">📥 Import from ABC</button>
+          </div>
+          <div id="abc-output" class="abc-output" style="display: none;">
+            <label>ABC Notation:</label>
+            <textarea id="abc-textarea" rows="6" readonly></textarea>
+            <button id="copy-abc-btn" class="action-btn">📋 Copy to Clipboard</button>
+          </div>
+          <div id="abc-input" class="abc-input" style="display: none;">
+            <label>Paste ABC Notation:</label>
+            <textarea id="abc-input-textarea" rows="6" placeholder="Paste ABC notation here..."></textarea>
+            <button id="parse-abc-btn" class="action-btn">✓ Parse ABC</button>
+            <button id="cancel-abc-btn" class="action-btn">Cancel</button>
+          </div>
         </div>
         
         <div class="pattern-presets">
@@ -338,6 +356,13 @@ export class PatternDesigner {
     this.container.querySelector('#load-pattern-btn')?.addEventListener('click', () => this.toggleSavedPatternsList());
     this.container.querySelector('#new-pattern-btn')?.addEventListener('click', () => this.newPattern());
     this.container.querySelector('#load-preset-btn')?.addEventListener('click', () => this.togglePresetPatternsList());
+    
+    // ABC notation tools
+    this.container.querySelector('#export-abc-btn')?.addEventListener('click', () => this.exportToABC());
+    this.container.querySelector('#import-abc-btn')?.addEventListener('click', () => this.showABCImport());
+    this.container.querySelector('#copy-abc-btn')?.addEventListener('click', () => this.copyABCToClipboard());
+    this.container.querySelector('#parse-abc-btn')?.addEventListener('click', () => this.parseABCInput());
+    this.container.querySelector('#cancel-abc-btn')?.addEventListener('click', () => this.hideABCInput());
     
     // Load saved patterns list
     this.renderSavedPatternsList();
@@ -1038,5 +1063,191 @@ export class PatternDesigner {
       console.error('Error rendering preset patterns list:', error);
       list.innerHTML = '<p style="color: #ef4444; padding: 1rem;">Failed to load preset patterns. Please try again.</p>';
     }
+  }
+  
+  // ABC Notation Tools
+  private exportToABC() {
+    // Create a temporary SheetMusicRenderer to generate ABC notation
+    const tempDiv = document.createElement('div');
+    const renderer = new SheetMusicRenderer(tempDiv, this.pattern);
+    
+    // Get the ABC notation string
+    const abcNotation = (renderer as any).convertToABC();
+    
+    // Show the ABC output area
+    const abcOutput = this.container.querySelector('#abc-output') as HTMLElement;
+    const abcTextarea = this.container.querySelector('#abc-textarea') as HTMLTextAreaElement;
+    const abcInput = this.container.querySelector('#abc-input') as HTMLElement;
+    
+    if (abcOutput && abcTextarea) {
+      abcTextarea.value = abcNotation;
+      abcOutput.style.display = 'block';
+      abcInput.style.display = 'none';
+      Toast.success('ABC notation generated!');
+    }
+  }
+  
+  private async copyABCToClipboard() {
+    const abcTextarea = this.container.querySelector('#abc-textarea') as HTMLTextAreaElement;
+    if (abcTextarea) {
+      try {
+        await navigator.clipboard.writeText(abcTextarea.value);
+        Toast.success('ABC notation copied to clipboard!');
+      } catch (error) {
+        // Fallback for older browsers
+        abcTextarea.select();
+        document.execCommand('copy');
+        Toast.success('ABC notation copied to clipboard!');
+      }
+    }
+  }
+  
+  private showABCImport() {
+    const abcInput = this.container.querySelector('#abc-input') as HTMLElement;
+    const abcOutput = this.container.querySelector('#abc-output') as HTMLElement;
+    const abcInputTextarea = this.container.querySelector('#abc-input-textarea') as HTMLTextAreaElement;
+    
+    if (abcInput && abcInputTextarea) {
+      abcInput.style.display = 'block';
+      abcOutput.style.display = 'none';
+      abcInputTextarea.value = '';
+      abcInputTextarea.focus();
+    }
+  }
+  
+  private hideABCInput() {
+    const abcInput = this.container.querySelector('#abc-input') as HTMLElement;
+    if (abcInput) {
+      abcInput.style.display = 'none';
+    }
+  }
+  
+  private parseABCInput() {
+    const abcInputTextarea = this.container.querySelector('#abc-input-textarea') as HTMLTextAreaElement;
+    if (!abcInputTextarea || !abcInputTextarea.value.trim()) {
+      Toast.error('Please paste ABC notation first');
+      return;
+    }
+    
+    try {
+      const abcText = abcInputTextarea.value.trim();
+      const notes = this.parseABCNotation(abcText);
+      
+      if (notes.length === 0) {
+        Toast.error('No notes found in ABC notation');
+        return;
+      }
+      
+      // Update the pattern with the parsed notes
+      this.pattern.notes = notes;
+      this.updateDisplay();
+      this.hideABCInput();
+      Toast.success(`Imported ${notes.length} notes from ABC notation!`);
+    } catch (error) {
+      console.error('Error parsing ABC:', error);
+      Toast.error('Failed to parse ABC notation. Please check the format.');
+    }
+  }
+  
+  /**
+   * Parse ABC notation string into our note format
+   * This is a simplified parser that handles the basics
+   */
+  private parseABCNotation(abc: string): Array<{ duration: NoteDuration; type: NoteType; dotted?: boolean; tie?: boolean }> {
+    const notes: Array<{ duration: NoteDuration; type: NoteType; dotted?: boolean; tie?: boolean }> = [];
+    
+    try {
+      // Use abcjs's built-in parser!
+      const parsed = abcjs.parseOnly(abc);
+      
+      if (!parsed || !parsed[0]) {
+        throw new Error('Failed to parse ABC notation');
+      }
+      
+      const tune = parsed[0];
+      
+      // Count bars from the parsed structure
+      let barCount = 0;
+      if (tune.lines) {
+        for (const line of tune.lines) {
+          if (line.staff && line.staff[0] && line.staff[0].voices) {
+            for (const voice of line.staff[0].voices) {
+              // Count bar lines in this voice
+              const bars = voice.filter((el: any) => el.el_type === 'bar');
+              barCount += bars.length;
+            }
+          }
+        }
+      }
+      
+      // Extract notes from the parsed structure
+      if (tune.lines) {
+        for (const line of tune.lines) {
+          if (line.staff && line.staff[0] && line.staff[0].voices) {
+            for (const voice of line.staff[0].voices) {
+              for (const element of voice) {
+                // Skip bar lines and other non-note elements
+                if (element.el_type === 'bar') continue;
+                
+                // Handle notes and rests
+                if (element.el_type === 'note') {
+                  // Check if it's a rest
+                  const isRest = element.rest;
+                  
+                  // Get duration - abcjs uses duration as a fraction of a whole note
+                  // 1 = whole, 0.5 = half, 0.25 = quarter, 0.125 = eighth, 0.0625 = sixteenth
+                  const abcDuration = element.duration || 0.25;
+                  let duration: NoteDuration = 'q';
+                  let dotted = false;
+                  
+                  // Convert ABC duration to our NoteDuration
+                  if (Math.abs(abcDuration - 1.0) < 0.01) {
+                    duration = 'w';
+                  } else if (Math.abs(abcDuration - 0.75) < 0.01) {
+                    duration = 'h';
+                    dotted = true;
+                  } else if (Math.abs(abcDuration - 0.5) < 0.01) {
+                    duration = 'h';
+                  } else if (Math.abs(abcDuration - 0.375) < 0.01) {
+                    duration = 'q';
+                    dotted = true;
+                  } else if (Math.abs(abcDuration - 0.25) < 0.01) {
+                    duration = 'q';
+                  } else if (Math.abs(abcDuration - 0.1875) < 0.01) {
+                    duration = '8';
+                    dotted = true;
+                  } else if (Math.abs(abcDuration - 0.125) < 0.01) {
+                    duration = '8';
+                  } else if (Math.abs(abcDuration - 0.09375) < 0.01) {
+                    duration = '16';
+                    dotted = true;
+                  } else if (Math.abs(abcDuration - 0.0625) < 0.01) {
+                    duration = '16';
+                  }
+                  
+                  notes.push({
+                    duration,
+                    type: isRest ? 'rest' : 'note',
+                    dotted,
+                    tie: element.startTie || false
+                  });
+                }
+              }
+            }
+          }
+        }
+      }
+      
+      // Update the pattern's bar count from the parsed ABC
+      if (barCount > 0) {
+        this.pattern.bars = barCount;
+      }
+      
+    } catch (error) {
+      console.error('Error parsing ABC:', error);
+      Toast.error('Failed to parse ABC notation. Please check the format.');
+    }
+    
+    return notes;
   }
 }

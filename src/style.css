@@ -686,6 +686,53 @@ body {
   transform: translateY(-1px);
 }
 
+/* ABC Notation Tools */
+.abc-tools {
+  display: flex;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.abc-output,
+.abc-input {
+  background: #0f3460;
+  border-radius: 8px;
+  padding: 1rem;
+  margin-top: 1rem;
+}
+
+.abc-output label,
+.abc-input label {
+  display: block;
+  color: #ccc;
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+}
+
+#abc-textarea,
+#abc-input-textarea {
+  width: 100%;
+  background: #16213e;
+  color: #fff;
+  border: 1px solid #667eea;
+  border-radius: 6px;
+  padding: 0.75rem;
+  font-family: 'Courier New', monospace;
+  font-size: 0.9rem;
+  resize: vertical;
+  margin-bottom: 0.5rem;
+}
+
+#abc-textarea:focus,
+#abc-input-textarea:focus {
+  outline: none;
+  border-color: #764ba2;
+}
+
+#abc-input-textarea::placeholder {
+  color: #888;
+}
+
 /* Toast Notifications */
 .toast-container {
   position: fixed;
