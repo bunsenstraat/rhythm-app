@@ -2,18 +2,21 @@
 
 import abcjs from 'abcjs';
 import type { RhythmPattern, Note, TestResults } from './types';
+import { getToleranceForNote as getToleranceForNoteHelper, type ToleranceMode } from './toleranceConfig';
 
 export class SheetMusicRenderer {
   private container: HTMLElement;
   private pattern: RhythmPattern;
   private onNoteClick?: (index: number, event: MouseEvent) => void;
   private barsPerLine: number = 4; // Default: 4 bars per line
+  private toleranceMode: ToleranceMode = 'normal';
 
-  constructor(container: HTMLElement, pattern: RhythmPattern, onNoteClick?: (index: number, event: MouseEvent) => void, barsPerLine: number = 4) {
+  constructor(container: HTMLElement, pattern: RhythmPattern, onNoteClick?: (index: number, event: MouseEvent) => void, barsPerLine: number = 4, toleranceMode: ToleranceMode = 'normal') {
     this.container = container;
     this.pattern = pattern;
     this.onNoteClick = onNoteClick;
     this.barsPerLine = barsPerLine;
+    this.toleranceMode = toleranceMode;
   }
 
   setCurrentNote(index: number) {
@@ -75,8 +78,8 @@ export class SheetMusicRenderer {
     const getToleranceForNote = (note: Note): number => {
       const beats = beatValues[note.duration] * (note.dotted ? 1.5 : 1);
       const noteDuration = beats * beatDuration;
-      // Tolerance = 30% of note duration, clamped between 50ms and 200ms
-      return Math.max(50, Math.min(200, noteDuration * 0.3));
+      // Use the tolerance config based on current mode
+      return getToleranceForNoteHelper(noteDuration, this.toleranceMode);
     };
     
     // NEW APPROACH: Note-centric matching with forward-only tap selection

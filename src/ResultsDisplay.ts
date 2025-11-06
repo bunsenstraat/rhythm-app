@@ -2,6 +2,7 @@
 
 import type { TestResults, RhythmPattern, Note } from './types';
 import { SheetMusicRenderer } from './SheetMusicRenderer';
+import { getToleranceForNote, type ToleranceMode } from './toleranceConfig';
 
 export class ResultsDisplay {
   private container: HTMLElement;
@@ -10,19 +11,22 @@ export class ResultsDisplay {
   private onRestart: () => void;
   private onBackToDesigner: () => void;
   private sheetRenderer: SheetMusicRenderer | null = null;
+  private toleranceMode: ToleranceMode;
 
   constructor(
     container: HTMLElement, 
     results: TestResults,
     pattern: RhythmPattern | null,
     onRestart: () => void,
-    onBackToDesigner: () => void
+    onBackToDesigner: () => void,
+    toleranceMode: ToleranceMode = 'normal'
   ) {
     this.container = container;
     this.results = results;
     this.pattern = pattern;
     this.onRestart = onRestart;
     this.onBackToDesigner = onBackToDesigner;
+    this.toleranceMode = toleranceMode;
     this.render();
   }
 
@@ -33,7 +37,7 @@ export class ResultsDisplay {
     // Pre-process: match taps to notes BEFORE rendering
     // This populates tap.noteIndex which is needed by renderTapList and renderTimingTable
     if (this.pattern) {
-      this.sheetRenderer = new SheetMusicRenderer(document.createElement('div'), this.pattern);
+      this.sheetRenderer = new SheetMusicRenderer(document.createElement('div'), this.pattern, undefined, 4, this.toleranceMode);
       this.sheetRenderer.render();
       this.sheetRenderer.annotateWithResults(this.results);
     }
@@ -103,7 +107,7 @@ export class ResultsDisplay {
       const sheetContainer = this.container.querySelector('#results-sheet-container') as HTMLElement;
       if (sheetContainer) {
         // Re-create the renderer for the actual container and re-render
-        this.sheetRenderer = new SheetMusicRenderer(sheetContainer, this.pattern);
+        this.sheetRenderer = new SheetMusicRenderer(sheetContainer, this.pattern, undefined, 4, this.toleranceMode);
         this.sheetRenderer.render();
         // Re-annotate (taps already have noteIndex set from pre-processing)
         this.sheetRenderer.annotateWithResults(this.results);
@@ -127,16 +131,16 @@ export class ResultsDisplay {
   }
 
   private renderTimingTable(): string {
-    // Calculate duration-based tolerance for each note
+    // Calculate duration-based tolerance for each note using the selected mode
     const beatDuration = 500; // ms per beat at 120 BPM
     const beatValues: Record<string, number> = {
       'w': 4, 'h': 2, 'q': 1, '8': 0.5, '16': 0.25, 'q3': 2/3, '83': 1/3
     };
     
-    const getToleranceForNote = (note: Note): number => {
+    const getNoteToleranceMs = (note: Note): number => {
       const beats = beatValues[note.duration] * (note.dotted ? 1.5 : 1);
       const noteDuration = beats * beatDuration;
-      return Math.max(50, Math.min(200, noteDuration * 0.3));
+      return getToleranceForNote(noteDuration, this.toleranceMode);
     };
     
     // Build complete picture: all expected notes and which were hit
@@ -183,7 +187,7 @@ export class ResultsDisplay {
         }
       }
       
-      const tolerance = foundNote ? getToleranceForNote(foundNote) : 100;
+      const tolerance = foundNote ? getNoteToleranceMs(foundNote) : 100;
       
       if (tap) {
         const diff = tap.accuracy;

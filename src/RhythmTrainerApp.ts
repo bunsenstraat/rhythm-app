@@ -15,6 +15,7 @@ export class RhythmTrainerApp {
   private audioEngine: AudioEngine;
   private pattern: RhythmPattern | null = null;
   private tempo: number = 120;
+  private toleranceMode: 'relaxed' | 'normal' | 'strict' | 'pro' = 'normal';
   private currentPlayer: RhythmPlayer | null = null;
   private lastResults: TestResults | null = null;
 
@@ -29,6 +30,12 @@ export class RhythmTrainerApp {
     const savedTempo = localStorage.getItem('rhythmTrainerTempo');
     if (savedTempo) {
       this.tempo = parseInt(savedTempo);
+    }
+    
+    // Load saved tolerance mode
+    const savedTolerance = localStorage.getItem('rhythmTrainerTolerance') as 'relaxed' | 'normal' | 'strict' | 'pro' | null;
+    if (savedTolerance) {
+      this.toleranceMode = savedTolerance;
     }
     
     this.renderLayout();
@@ -99,6 +106,26 @@ export class RhythmTrainerApp {
         </div>
       </div>
       
+      <div class="tolerance-control">
+        <label class="tolerance-label">Timing Difficulty</label>
+        <p class="tolerance-description">How strict should the timing judgment be?</p>
+        
+        <div class="tolerance-presets">
+          <button class="tolerance-preset-btn ${this.toleranceMode === 'relaxed' ? 'active' : ''}" data-tolerance="relaxed">
+            😌 Relaxed<br><small>±100-300ms</small>
+          </button>
+          <button class="tolerance-preset-btn ${this.toleranceMode === 'normal' ? 'active' : ''}" data-tolerance="normal">
+            👍 Normal<br><small>±50-200ms</small>
+          </button>
+          <button class="tolerance-preset-btn ${this.toleranceMode === 'strict' ? 'active' : ''}" data-tolerance="strict">
+            😤 Strict<br><small>±30-120ms</small>
+          </button>
+          <button class="tolerance-preset-btn ${this.toleranceMode === 'pro' ? 'active' : ''}" data-tolerance="pro">
+            🎯 Pro<br><small>±20-80ms</small>
+          </button>
+        </div>
+      </div>
+      
       <div class="action-buttons">
         <button id="start-button" class="primary-button">Start Practice</button>
         <button id="challenge-button" class="secondary-button">🎯 Challenge Mode</button>
@@ -131,8 +158,18 @@ export class RhythmTrainerApp {
       });
     });
     
-    // Highlight active preset
+    // Tolerance preset buttons
+    const toleranceButtons = document.querySelectorAll('.tolerance-preset-btn');
+    toleranceButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const tolerance = (btn as HTMLElement).dataset.tolerance as 'relaxed' | 'normal' | 'strict' | 'pro';
+        this.setTolerance(tolerance);
+      });
+    });
+    
+    // Highlight active presets
     this.updateActivePreset();
+    this.updateActiveTolerance();
 
     // Start button
     document.getElementById('start-button')?.addEventListener('click', () => {
@@ -156,11 +193,30 @@ export class RhythmTrainerApp {
     this.updateActivePreset();
   }
   
+  private setTolerance(tolerance: 'relaxed' | 'normal' | 'strict' | 'pro') {
+    this.toleranceMode = tolerance;
+    localStorage.setItem('rhythmTrainerTolerance', tolerance);
+    this.updateActiveTolerance();
+    Toast.info(`Timing difficulty set to: ${tolerance}`);
+  }
+  
   private updateActivePreset() {
     const presetButtons = document.querySelectorAll('.tempo-preset-btn');
     presetButtons.forEach(btn => {
       const btnTempo = parseInt((btn as HTMLElement).dataset.tempo || '0');
       if (btnTempo === this.tempo) {
+        btn.classList.add('active');
+      } else {
+        btn.classList.remove('active');
+      }
+    });
+  }
+  
+  private updateActiveTolerance() {
+    const toleranceButtons = document.querySelectorAll('.tolerance-preset-btn');
+    toleranceButtons.forEach(btn => {
+      const btnTolerance = (btn as HTMLElement).dataset.tolerance;
+      if (btnTolerance === this.toleranceMode) {
         btn.classList.add('active');
       } else {
         btn.classList.remove('active');
@@ -202,7 +258,8 @@ export class RhythmTrainerApp {
       results,
       this.pattern, // Pass the pattern for sheet music annotation
       () => this.startPractice(), // Try Again - restart practice
-      () => this.showDesigner()   // Back to Designer
+      () => this.showDesigner(),  // Back to Designer
+      this.toleranceMode         // Pass tolerance mode
     );
   }
 
