@@ -1473,6 +1473,17 @@ button:hover {
   color: white;
 }
 
+.tolerance-badge {
+  display: inline-block;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  background: #667eea;
+  color: white;
+  border: 1px solid #5568d3;
+}
+
 .analytics-summary {
   margin-top: 1.5rem;
   padding: 1rem;

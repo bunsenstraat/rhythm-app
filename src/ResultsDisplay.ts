@@ -1,6 +1,6 @@
 // Results display component
 
-import type { TestResults, RhythmPattern } from './types';
+import type { TestResults, RhythmPattern, Note } from './types';
 import { SheetMusicRenderer } from './SheetMusicRenderer';
 
 export class ResultsDisplay {
@@ -127,6 +127,18 @@ export class ResultsDisplay {
   }
 
   private renderTimingTable(): string {
+    // Calculate duration-based tolerance for each note
+    const beatDuration = 500; // ms per beat at 120 BPM
+    const beatValues: Record<string, number> = {
+      'w': 4, 'h': 2, 'q': 1, '8': 0.5, '16': 0.25, 'q3': 2/3, '83': 1/3
+    };
+    
+    const getToleranceForNote = (note: Note): number => {
+      const beats = beatValues[note.duration] * (note.dotted ? 1.5 : 1);
+      const noteDuration = beats * beatDuration;
+      return Math.max(50, Math.min(200, noteDuration * 0.3));
+    };
+    
     // Build complete picture: all expected notes and which were hit
     const rows: string[] = [];
     
@@ -139,6 +151,7 @@ export class ResultsDisplay {
             <th>Expected Time</th>
             <th>Actual Time</th>
             <th>Difference</th>
+            <th>Tolerance</th>
             <th>Status</th>
           </tr>
         </thead>
@@ -149,6 +162,28 @@ export class ResultsDisplay {
     this.results.expectedTaps.forEach((expectedTime, index) => {
       // Find if this note was hit
       const tap = this.results.taps.find(t => t.noteIndex === index);
+      
+      // Find the actual note in the pattern to get tolerance
+      let expectedTapCount = 0;
+      let foundNote: Note | null = null;
+      
+      if (this.pattern) {
+        for (let i = 0; i < this.pattern.notes.length; i++) {
+          const note = this.pattern.notes[i];
+          const previousNote = i > 0 ? this.pattern.notes[i - 1] : null;
+          const isTiedFromPrevious = previousNote && previousNote.tie;
+          
+          if (note.type === 'note' && !isTiedFromPrevious) {
+            if (expectedTapCount === index) {
+              foundNote = note;
+              break;
+            }
+            expectedTapCount++;
+          }
+        }
+      }
+      
+      const tolerance = foundNote ? getToleranceForNote(foundNote) : 100;
       
       if (tap) {
         const diff = tap.accuracy;
@@ -163,6 +198,7 @@ export class ResultsDisplay {
             <td>${expectedTime.toFixed(0)}ms</td>
             <td>${tap.timestamp.toFixed(0)}ms</td>
             <td>${diffStr}</td>
+            <td><span class="tolerance-badge">±${tolerance.toFixed(0)}ms</span></td>
             <td><span class="status-badge ${status}">${status.toUpperCase()}</span></td>
           </tr>
         `);
@@ -174,6 +210,7 @@ export class ResultsDisplay {
             <td>${expectedTime.toFixed(0)}ms</td>
             <td>—</td>
             <td>—</td>
+            <td><span class="tolerance-badge">±${tolerance.toFixed(0)}ms</span></td>
             <td><span class="status-badge missed">MISSED</span></td>
           </tr>
         `);
