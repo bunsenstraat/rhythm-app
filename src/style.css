@@ -1,0 +1,804 @@
+:root {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+
+  color-scheme: light dark;
+  color: rgba(255, 255, 255, 0.87);
+  background-color: #1a1a2e;
+
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+}
+
+#app {
+  width: 100%;
+  min-height: 100vh;
+}
+
+.rhythm-trainer-app {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+.app-header {
+  text-align: center;
+  margin-bottom: 3rem;
+}
+
+.app-header h1 {
+  font-size: 3rem;
+  margin: 0;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.app-subtitle {
+  color: #888;
+  font-size: 1.2rem;
+  margin-top: 0.5rem;
+}
+
+/* Pattern Designer */
+.pattern-designer {
+  background: #16213e;
+  border-radius: 12px;
+  padding: 2rem;
+  margin-bottom: 2rem;
+}
+
+.pattern-designer h2 {
+  margin-top: 0;
+  color: #fff;
+}
+
+.sheet-music-container {
+  background: #fff;
+  border-radius: 8px;
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+  overflow-x: auto;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* ABC.js highlight styling */
+.abcjs-highlight {
+  fill: #667eea !important;
+  stroke: #667eea !important;
+}
+
+.abcjs-note {
+  transition: fill 0.1s ease, stroke 0.1s ease;
+}
+
+/* Rhythm Editor */
+.rhythm-editor {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+  margin-bottom: 2rem;
+}
+
+.note-palette h3,
+.note-type-palette h3 {
+  margin-top: 0;
+  color: #ccc;
+  font-size: 1rem;
+}
+
+.duration-buttons,
+.type-buttons {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.duration-btn,
+.type-btn {
+  flex: 1;
+  min-width: 60px;
+  padding: 0.8rem;
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.duration-btn.active,
+.type-btn.active {
+  background: #667eea;
+  color: #fff;
+}
+
+/* Notes List */
+.notes-list {
+  background: #16213e;
+  border-radius: 8px;
+  padding: 1rem;
+  overflow-x: auto;
+  overflow-y: hidden;
+  margin-bottom: 2rem;
+  white-space: nowrap;
+  display: flex;
+  gap: 0.5rem;
+  min-height: 80px;
+  align-items: center;
+}
+
+.note-item {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0.8rem 1rem;
+  background: #0f3460;
+  border-radius: 6px;
+  border-bottom: 3px solid #667eea;
+  position: relative;
+  min-width: 80px;
+  gap: 0.5rem;
+}
+
+.note-label {
+  color: #fff;
+  font-weight: 500;
+  font-size: 0.85rem;
+  text-align: center;
+  white-space: normal;
+  line-height: 1.2;
+}
+
+.note-symbol {
+  font-size: 1.5rem;
+  margin-bottom: 0.25rem;
+}
+
+.delete-note-btn {
+  background: #e94560;
+  color: #fff;
+  border: none;
+  padding: 0.3rem 0.6rem;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.75rem;
+  position: absolute;
+  top: 0.25rem;
+  right: 0.25rem;
+}
+
+.delete-note-btn:hover {
+  background: #d63447;
+}
+
+/* Editor Controls */
+.editor-controls {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.action-btn {
+  flex: 1;
+  padding: 1rem;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.controls {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.control-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.control-group label {
+  font-weight: 500;
+  color: #ccc;
+}
+
+.control-group input[type="range"] {
+  width: 100%;
+  height: 8px;
+  border-radius: 5px;
+  background: #0f3460;
+  outline: none;
+  appearance: none;
+  -webkit-appearance: none;
+}
+
+.control-group input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #667eea;
+  cursor: pointer;
+}
+
+.control-group input[type="range"]::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #667eea;
+  cursor: pointer;
+  border: none;
+}
+
+/* Pattern Grid */
+.pattern-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.bar {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.bar-label {
+  min-width: 60px;
+  font-weight: 500;
+  color: #888;
+  font-size: 0.9rem;
+}
+
+.beat {
+  flex: 1;
+  aspect-ratio: 1;
+  max-width: 80px;
+  background: #0f3460;
+  border: 2px solid #1a4d7a;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  position: relative;
+}
+
+.beat:hover {
+  background: #1a4d7a;
+  transform: scale(1.05);
+}
+
+.beat.active {
+  background: #667eea;
+  border-color: #764ba2;
+  box-shadow: 0 0 20px rgba(102, 126, 234, 0.5);
+}
+
+.beat.downbeat {
+  border-color: #e94560;
+}
+
+.beat-number {
+  font-size: 0.8rem;
+  color: #888;
+  font-weight: 500;
+}
+
+.beat.active .beat-number {
+  color: #fff;
+  font-weight: 700;
+}
+
+/* Presets */
+.pattern-presets {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.pattern-presets button {
+  flex: 1;
+  min-width: 120px;
+}
+
+/* Pattern Management */
+.pattern-management {
+  background: #16213e;
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.pattern-management h3 {
+  margin-top: 0;
+  color: #ccc;
+  font-size: 1rem;
+}
+
+.management-buttons {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.mgmt-btn {
+  flex: 1;
+  padding: 0.75rem;
+  background: #667eea;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.mgmt-btn:hover {
+  background: #5568d3;
+  transform: translateY(-2px);
+}
+
+.saved-patterns-list {
+  display: none;
+  background: #0f3460;
+  border-radius: 8px;
+  padding: 0.5rem;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.saved-pattern-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem;
+  background: #16213e;
+  border-radius: 6px;
+  margin: 0.5rem 0;
+}
+
+.pattern-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.pattern-info strong {
+  color: #fff;
+}
+
+.pattern-info small {
+  color: #888;
+  font-size: 0.85rem;
+}
+
+.pattern-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.pattern-actions .load-btn {
+  background: #10b981;
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.pattern-actions .load-btn:hover {
+  background: #059669;
+}
+
+.pattern-actions .delete-btn {
+  background: #e94560;
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.pattern-actions .delete-btn:hover {
+  background: #d63447;
+}
+
+/* Tempo Control */
+.tempo-control {
+  background: #16213e;
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.tempo-control label {
+  display: block;
+  font-weight: 500;
+  color: #ccc;
+  margin-bottom: 0.5rem;
+}
+
+.tempo-control input[type="range"] {
+  width: 100%;
+  height: 8px;
+  border-radius: 5px;
+  background: #0f3460;
+  outline: none;
+  appearance: none;
+  -webkit-appearance: none;
+}
+
+.tempo-control input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #667eea;
+  cursor: pointer;
+}
+
+.tempo-control input[type="range"]::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #667eea;
+  cursor: pointer;
+  border: none;
+}
+
+/* Buttons */
+button {
+  border-radius: 8px;
+  border: none;
+  padding: 0.8em 1.5em;
+  font-size: 1em;
+  font-weight: 600;
+  font-family: inherit;
+  background-color: #0f3460;
+  color: #fff;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+button:hover {
+  background-color: #1a4d7a;
+  transform: translateY(-2px);
+}
+
+.primary-button {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  font-size: 1.2rem;
+  padding: 1rem 3rem;
+  display: block;
+  margin: 0 auto;
+}
+
+.primary-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+}
+
+/* Rhythm Player */
+.rhythm-player {
+  text-align: center;
+  padding: 2rem;
+}
+
+.rhythm-player h2 {
+  margin-top: 0;
+  font-size: 2rem;
+}
+
+.sheet-music-container {
+  background: #fff;
+  border-radius: 8px;
+  padding: 1.5rem;
+  margin: 2rem auto;
+  overflow-x: auto;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  max-width: 1000px;
+}
+
+.progress-bar {
+  width: 100%;
+  height: 20px;
+  background: #16213e;
+  border-radius: 10px;
+  overflow: hidden;
+  margin: 2rem 0;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+  transition: width 0.1s linear;
+  width: 0;
+}
+
+.current-beat {
+  font-size: 1.5rem;
+  margin: 2rem 0;
+  color: #ccc;
+}
+
+.current-note {
+  font-size: 1.5rem;
+  margin: 2rem 0;
+  color: #ccc;
+}
+
+#beat-number,
+#note-number {
+  color: #667eea;
+  font-weight: 700;
+}
+
+.tap-button-container {
+  margin: 3rem 0;
+}
+
+.tap-button {
+  width: 250px;
+  height: 250px;
+  border-radius: 50%;
+  font-size: 3rem;
+  font-weight: 700;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border: 5px solid #764ba2;
+  box-shadow: 0 10px 40px rgba(102, 126, 234, 0.4);
+  transition: all 0.1s;
+}
+
+.tap-button:hover {
+  transform: scale(1.05);
+}
+
+.tap-button:active,
+.tap-button.tapped {
+  transform: scale(0.95);
+  box-shadow: 0 5px 20px rgba(102, 126, 234, 0.6);
+}
+
+.tap-counter {
+  font-size: 1.3rem;
+  margin-top: 2rem;
+  color: #ccc;
+}
+
+#tap-count {
+  color: #667eea;
+  font-weight: 700;
+}
+
+/* Results Display */
+.results-display {
+  padding: 2rem;
+}
+
+.results-display h2 {
+  text-align: center;
+  font-size: 2.5rem;
+  margin-top: 0;
+}
+
+.score-card {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 20px;
+  padding: 3rem;
+  text-align: center;
+  margin: 2rem 0;
+}
+
+.score-main {
+  color: #fff;
+}
+
+.score-value {
+  font-size: 5rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.score-label {
+  font-size: 1.5rem;
+  margin-top: 0.5rem;
+  opacity: 0.9;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 1.5rem;
+  margin: 2rem 0;
+}
+
+.stat {
+  background: #16213e;
+  border-radius: 12px;
+  padding: 1.5rem;
+  text-align: center;
+}
+
+.stat-value {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: #667eea;
+}
+
+.stat-label {
+  font-size: 0.9rem;
+  color: #888;
+  margin-top: 0.5rem;
+}
+
+.tap-details {
+  margin: 3rem 0;
+}
+
+.tap-details h3 {
+  color: #ccc;
+  margin-bottom: 1rem;
+}
+
+.tap-list {
+  max-height: 400px;
+  overflow-y: auto;
+  background: #16213e;
+  border-radius: 12px;
+  padding: 1rem;
+}
+
+.tap-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.8rem;
+  margin: 0.5rem 0;
+  background: #0f3460;
+  border-radius: 8px;
+  border-left: 4px solid #667eea;
+}
+
+.tap-item.perfect {
+  border-left-color: #4caf50;
+}
+
+.tap-item.good {
+  border-left-color: #8bc34a;
+}
+
+.tap-item.ok {
+  border-left-color: #ffc107;
+}
+
+.tap-item.poor {
+  border-left-color: #f44336;
+}
+
+.tap-number {
+  font-weight: 600;
+  color: #888;
+}
+
+.tap-timing {
+  color: #ccc;
+}
+
+.tap-status {
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 0.8rem;
+}
+
+.tap-item.perfect .tap-status {
+  color: #4caf50;
+}
+
+.tap-item.good .tap-status {
+  color: #8bc34a;
+}
+
+.tap-item.ok .tap-status {
+  color: #ffc107;
+}
+
+.tap-item.poor .tap-status {
+  color: #f44336;
+}
+
+.no-taps {
+  text-align: center;
+  padding: 2rem;
+  color: #888;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .rhythm-trainer-app {
+    padding: 1rem;
+  }
+
+  .app-header h1 {
+    font-size: 2rem;
+  }
+
+  .beat {
+    max-width: 60px;
+  }
+
+  .tap-button {
+    width: 200px;
+    height: 200px;
+    font-size: 2.5rem;
+  }
+
+  .score-value {
+    font-size: 3.5rem;
+  }
+}
+
+@media (prefers-color-scheme: light) {
+  :root {
+    color: #213547;
+    background-color: #f5f5f5;
+  }
+
+  .rhythm-trainer-app {
+    color: #213547;
+  }
+
+  .pattern-designer,
+  .tempo-control,
+  .stat,
+  .tap-list {
+    background: #fff;
+    color: #213547;
+  }
+
+  .beat {
+    background: #e0e0e0;
+    border-color: #bdbdbd;
+  }
+
+  .beat:hover {
+    background: #d0d0d0;
+  }
+
+  .progress-bar {
+    background: #e0e0e0;
+  }
+
+  button {
+    background-color: #e0e0e0;
+    color: #213547;
+  }
+
+  button:hover {
+    background-color: #d0d0d0;
+  }
+
+  .control-group input[type="range"],
+  .tempo-control input[type="range"] {
+    background: #e0e0e0;
+  }
+}
