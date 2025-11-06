@@ -194,6 +194,14 @@ body {
   font-weight: bold;
 }
 
+.dot-indicator {
+  color: #f59e0b;
+  font-size: 1.4rem;
+  margin-left: 0.15rem;
+  font-weight: bold;
+  line-height: 0.8;
+}
+
 .delete-note-btn {
   background: #e94560;
   color: #fff;

@@ -75,6 +75,11 @@ export class PatternDesigner {
               <button class="sel-action-btn" data-action="tie" data-value="remove" title="Remove tie">Remove Tie</button>
             </div>
             <div class="action-group">
+              <label>Dot:</label>
+              <button class="sel-action-btn" data-action="dot" data-value="add" title="Add dot (1.5x duration)">Add Dot</button>
+              <button class="sel-action-btn" data-action="dot" data-value="remove" title="Remove dot">Remove Dot</button>
+            </div>
+            <div class="action-group">
               <button class="sel-action-btn danger" data-action="delete">Delete Selected</button>
             </div>
           </div>
@@ -169,10 +174,11 @@ export class PatternDesigner {
     return this.pattern.notes.map((note, index) => {
       const isSelected = this.selectedNotes.has(index);
       const tieIndicator = note.tie ? '<span class="tie-indicator">~</span>' : '';
+      const dotIndicator = note.dotted ? '<span class="dot-indicator">•</span>' : '';
       return `
       <div class="note-item ${isSelected ? 'selected' : ''}" data-index="${index}">
         <button class="delete-note-btn" data-index="${index}">×</button>
-        <div class="note-symbol">${note.type === 'rest' ? restSymbol : noteSymbols[note.duration]}${tieIndicator}</div>
+        <div class="note-symbol">${note.type === 'rest' ? restSymbol : noteSymbols[note.duration]}${dotIndicator}${tieIndicator}</div>
         <span class="note-label">${noteNames[note.duration]}<br>${note.type === 'rest' ? 'Rest' : 'Note'}</span>
       </div>
     `;
@@ -339,6 +345,8 @@ export class PatternDesigner {
   }
   
   private updateSelectionDisplay() {
+    console.log(`[PatternDesigner] Updating selection display for indices:`, Array.from(this.selectedNotes));
+    
     // Update selected visual state on note items
     const noteItems = this.container.querySelectorAll('.note-item');
     noteItems.forEach((item, index) => {
@@ -419,6 +427,24 @@ export class PatternDesigner {
         }
         break;
         
+      case 'dot':
+        if (value === 'add') {
+          // Add dot to selected notes (can't dot triplets)
+          indices.forEach(index => {
+            const note = this.pattern.notes[index];
+            // Don't dot triplets as they have special timing
+            if (note.duration !== 'q3' && note.duration !== '83') {
+              this.pattern.notes[index].dotted = true;
+            }
+          });
+        } else if (value === 'remove') {
+          // Remove dot from selected notes
+          indices.forEach(index => {
+            this.pattern.notes[index].dotted = false;
+          });
+        }
+        break;
+        
       case 'delete':
         // Delete in reverse order to maintain indices
         indices.reverse().forEach(index => {
@@ -467,7 +493,10 @@ export class PatternDesigner {
     
     this.pattern.notes.forEach((note) => {
       noteTimes.push(currentTime);
-      const noteBeats = beatValues[note.duration];
+      let noteBeats = beatValues[note.duration];
+      if (note.dotted) {
+        noteBeats *= 1.5; // Dot adds 50% to duration
+      }
       currentTime += noteBeats * beatDuration;
     });
 
@@ -659,6 +688,8 @@ export class PatternDesigner {
   }
   
   private handleSheetMusicNoteClick(index: number, event: MouseEvent) {
+    console.log(`[PatternDesigner] Sheet music note clicked - index: ${index}, modifiers: Ctrl=${event.ctrlKey}, Meta=${event.metaKey}, Shift=${event.shiftKey}`);
+    
     // Sync selection between sheet music and note list
     const isMetaOrCtrl = event.metaKey || event.ctrlKey;
     const isShiftKey = event.shiftKey;
@@ -667,8 +698,10 @@ export class PatternDesigner {
       // Toggle individual selection
       if (this.selectedNotes.has(index)) {
         this.selectedNotes.delete(index);
+        console.log(`[PatternDesigner] Removed index ${index} from selection`);
       } else {
         this.selectedNotes.add(index);
+        console.log(`[PatternDesigner] Added index ${index} to selection`);
       }
     } else if (isShiftKey && this.selectedNotes.size > 0) {
       // Range select
@@ -676,15 +709,18 @@ export class PatternDesigner {
       const lastSelected = Math.max(...indices);
       const start = Math.min(lastSelected, index);
       const end = Math.max(lastSelected, index);
+      console.log(`[PatternDesigner] Range select from ${start} to ${end}`);
       for (let i = start; i <= end; i++) {
         this.selectedNotes.add(i);
       }
     } else {
       // Single select
+      console.log(`[PatternDesigner] Single select - clearing previous selection and selecting index ${index}`);
       this.selectedNotes.clear();
       this.selectedNotes.add(index);
     }
     
+    console.log(`[PatternDesigner] Current selection:`, Array.from(this.selectedNotes));
     this.updateSelectionDisplay();
   }
 

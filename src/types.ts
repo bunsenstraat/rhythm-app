@@ -7,6 +7,7 @@ export interface Note {
   duration: NoteDuration;
   type: NoteType;
   tie?: boolean; // Whether this note is tied to the next note
+  dotted?: boolean; // Whether this note is dotted (adds 50% duration)
 }
 
 export interface RhythmPattern {

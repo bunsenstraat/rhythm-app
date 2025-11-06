@@ -19,14 +19,25 @@ export class SheetMusicRenderer {
   }
 
   private highlightNote(index: number) {
+    console.log(`[SheetMusic] Highlighting note at pattern index: ${index}`);
+    
     // Remove previous highlights
     const elements = this.container.querySelectorAll('.abcjs-note');
     elements.forEach(el => el.classList.remove('abcjs-highlight'));
     
-    // Highlight current note by index
-    const noteElements = Array.from(elements);
-    if (noteElements[index]) {
-      noteElements[index].classList.add('abcjs-highlight');
+    // Highlight note by pattern index using data attribute
+    let found = false;
+    elements.forEach(el => {
+      const patternIndex = parseInt((el as HTMLElement).dataset.patternIndex || '-1');
+      if (patternIndex === index) {
+        el.classList.add('abcjs-highlight');
+        found = true;
+        console.log(`[SheetMusic] Highlighted visual note with pattern index ${patternIndex}`);
+      }
+    });
+    
+    if (!found) {
+      console.warn(`[SheetMusic] Could not find note with pattern index ${index}`);
     }
   }
 
@@ -52,15 +63,76 @@ export class SheetMusicRenderer {
         scale: 1.2
       });
       
-      // Attach click listeners to rendered notes
+      // Debug: log all classes found in the rendered SVG
+      console.log('[SheetMusic] Rendered SVG structure:');
+      const allElements = this.container.querySelectorAll('*');
+      const uniqueClasses = new Set<string>();
+      allElements.forEach(el => {
+        if (el.classList.length > 0) {
+          el.classList.forEach(className => uniqueClasses.add(className));
+        }
+      });
+      console.log('[SheetMusic] All CSS classes found:', Array.from(uniqueClasses));
+      
+      // Try different selectors
+      const noteSelectors = ['.abcjs-note', '.abcjs-note_selected', 'g[data-name="note"]', 'path[data-name="note"]', '.abcjs-n'];
+      noteSelectors.forEach(selector => {
+        const found = this.container.querySelectorAll(selector);
+        console.log(`[SheetMusic] Selector '${selector}' found ${found.length} elements`);
+      });
+      
+      // Attach click listeners to rendered notes with proper event handling
       if (this.onNoteClick) {
-        const noteElements = this.container.querySelectorAll('.abcjs-note');
-        noteElements.forEach((el, index) => {
+        // Get all SVG note elements - try different selectors
+        let allNoteElements = this.container.querySelectorAll('.abcjs-note');
+        
+        if (allNoteElements.length === 0) {
+          // Try alternative selectors if .abcjs-note doesn't work
+          allNoteElements = this.container.querySelectorAll('[data-name="note"]');
+        }
+        
+        console.log('[SheetMusic] Total notes rendered by ABC.js:', allNoteElements.length);
+        console.log('[SheetMusic] Pattern has', this.pattern.notes.length, 'notes');
+        
+        // Create a mapping from visual note index to pattern note index
+        // ABC.js renders both notes and rests, we need to map them correctly
+        let patternIndex = 0;
+        
+        allNoteElements.forEach((el) => {
+          // Make notes focusable and clickable
+          (el as HTMLElement).style.cursor = 'pointer';
+          (el as HTMLElement).tabIndex = 0;
+          
+          // Store the pattern index on the element for reference
+          (el as HTMLElement).dataset.patternIndex = patternIndex.toString();
+          console.log(`[SheetMusic] Mapping visual note ${patternIndex} to pattern index ${patternIndex}`);
+          
           el.addEventListener('click', (e) => {
             if (this.onNoteClick) {
-              this.onNoteClick(index, e as MouseEvent);
+              const idx = parseInt((el as HTMLElement).dataset.patternIndex || '0');
+              console.log(`[SheetMusic] Note clicked - pattern index: ${idx}`);
+              // Pass the actual mouse event so modifiers work
+              this.onNoteClick(idx, e as MouseEvent);
             }
           });
+          
+          // Also support keyboard selection
+          el.addEventListener('keydown', (e) => {
+            if ((e as KeyboardEvent).key === 'Enter' || (e as KeyboardEvent).key === ' ') {
+              e.preventDefault();
+              if (this.onNoteClick) {
+                const idx = parseInt((el as HTMLElement).dataset.patternIndex || '0');
+                this.onNoteClick(idx, new MouseEvent('click', {
+                  bubbles: true,
+                  shiftKey: (e as KeyboardEvent).shiftKey,
+                  ctrlKey: (e as KeyboardEvent).ctrlKey,
+                  metaKey: (e as KeyboardEvent).metaKey
+                }));
+              }
+            }
+          });
+          
+          patternIndex++;
         });
       }
     } catch (error) {
@@ -123,7 +195,11 @@ export class SheetMusicRenderer {
         const noteStr = this.getNoteString(note);
         // Add tie if this note has a tie marker
         abcNotes += noteStr + (note.tie ? '-' : '') + ' ';
-        currentBarBeats += beatValues[note.duration];
+        let noteBeats = beatValues[note.duration];
+        if (note.dotted) {
+          noteBeats *= 1.5; // Dot adds 50% to duration
+        }
+        currentBarBeats += noteBeats;
         i++;
       }
       
@@ -162,7 +238,8 @@ ${abcNotes}]`;
     // C2 = half (2/4)
     // C4 = whole (4/4)  
     // C/ = eighth (1/8)
-    // C/ = sixteenth (1/16)
+    // C// = sixteenth (1/16)
+    // C3/2 = dotted quarter (adds 50%)
     
     const durationMap: Record<string, string> = {
       'w': '4',      // whole = 4 quarters
@@ -174,7 +251,26 @@ ${abcNotes}]`;
       '83': '/'      // eighth triplet (handled in group)
     };
     
-    return pitch + (durationMap[note.duration] || '');
+    const baseDuration = durationMap[note.duration] || '';
+    
+    // In ABC notation, dots are represented by multiplying the duration by 3/2
+    // For example: B3/2 = dotted quarter, B/3/2 = dotted eighth
+    let dottedDuration = baseDuration;
+    if (note.dotted) {
+      if (baseDuration === '') {
+        dottedDuration = '3/2'; // dotted quarter
+      } else if (baseDuration === '/') {
+        dottedDuration = '/3/2'; // dotted eighth
+      } else if (baseDuration === '//') {
+        dottedDuration = '//3/2'; // dotted sixteenth
+      } else if (baseDuration === '2') {
+        dottedDuration = '3'; // dotted half (2 * 1.5 = 3)
+      } else if (baseDuration === '4') {
+        dottedDuration = '6'; // dotted whole (4 * 1.5 = 6)
+      }
+    }
+    
+    return pitch + dottedDuration;
   }
 
   destroy() {

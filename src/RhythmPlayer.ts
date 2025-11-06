@@ -79,8 +79,11 @@ export class RhythmPlayer {
         this.expectedTaps.push(currentTime);
       }
       
-      // Move forward by the note's duration
-      const noteBeats = beatValues[note.duration];
+      // Move forward by the note's duration (with dot if applicable)
+      let noteBeats = beatValues[note.duration];
+      if (note.dotted) {
+        noteBeats *= 1.5; // Dot adds 50% to duration
+      }
       currentTime += noteBeats * beatDuration;
     });
   }
