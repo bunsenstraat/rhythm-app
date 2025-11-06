@@ -29,6 +29,7 @@ export interface TestResults {
   accuracy: number; // Average accuracy in ms
   score: number; // Percentage score (0-100)
   taps: TapEvent[];
+  expectedTaps: number[]; // The actual expected times calculated by RhythmPlayer
 }
 
 export type AppState = 'design' | 'playing' | 'results';

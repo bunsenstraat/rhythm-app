@@ -235,7 +235,8 @@ export class RhythmTrainerApp {
       missedNotes,
       accuracy: avgAccuracy,
       score: Math.max(0, Math.min(100, score)),
-      taps
+      taps,
+      expectedTaps, // Pass through the actual expected times
     };
   }
   

@@ -27,9 +27,10 @@ export class SheetMusicRenderer {
    * - Orange: Hit but timing was off (early/late)
    * - Red: Missed completely
    */
-  annotateWithResults(results: TestResults, timingTolerance: number = 500) {
+  annotateWithResults(results: TestResults, timingTolerance: number = 100) {
     console.log('[SheetMusic] Annotating with test results:', results);
     console.log('[SheetMusic] Pattern notes:', this.pattern.notes);
+    console.log('[SheetMusic] Expected taps from RhythmPlayer:', results.expectedTaps);
     
     // Try different selectors to find note elements
     let elements = this.container.querySelectorAll('.abcjs-note');
@@ -41,33 +42,26 @@ export class SheetMusicRenderer {
       console.log('[SheetMusic] Using .abcjs-note selector, found', elements.length, 'elements');
     }
     
-    // Calculate expected time for each note
-    const beatDuration = (60 / 120) * 1000; // TODO: Get actual tempo
-    const beatValues: Record<string, number> = {
-      'w': 4, 'h': 2, 'q': 1, '8': 0.5, '16': 0.25, 'q3': 2/3, '83': 1/3
-    };
-    
-    // Build a map of note pattern index -> expected time
-    // Skip tied notes (notes that are tied FROM the previous note)
+    // Use the actual expected tap times from RhythmPlayer instead of recalculating
+    // Map pattern note indices to expected tap times
     const noteExpectedTimes = new Map<number, number>();
-    let currentTime = 0;
+    let expectedTapIndex = 0;
     
     for (let i = 0; i < this.pattern.notes.length; i++) {
       const note = this.pattern.notes[i];
       const previousNote = i > 0 ? this.pattern.notes[i - 1] : null;
       const isTiedFromPrevious = previousNote && previousNote.tie;
       
-      // Only add notes that should be tapped (not rests, not tied from previous)
+      // Only notes that should be tapped (not rests, not tied from previous)
       if (note.type === 'note' && !isTiedFromPrevious) {
-        noteExpectedTimes.set(i, currentTime);
+        if (expectedTapIndex < results.expectedTaps.length) {
+          noteExpectedTimes.set(i, results.expectedTaps[expectedTapIndex]);
+          expectedTapIndex++;
+        }
       }
-      
-      let beats = beatValues[note.duration];
-      if (note.dotted) beats *= 1.5;
-      currentTime += beats * beatDuration;
     }
     
-    console.log('[SheetMusic] Note expected times:', Array.from(noteExpectedTimes.entries()));
+    console.log('[SheetMusic] Note expected times (using actual from RhythmPlayer):', Array.from(noteExpectedTimes.entries()));
     
     // Build a map: note pattern index -> tap result
     const noteHits = new Map<number, { hit: boolean; accuracy: number }>();
