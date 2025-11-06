@@ -22,9 +22,9 @@ try {
   // Read all files in patterns directory
   const files = fs.readdirSync(patternsDir);
   
-  // Filter for JSON files, excluding index.json
+  // Filter for JSON and ABC files, excluding index.json
   const patternFiles = files.filter(file => 
-    file.endsWith('.json') && file !== 'index.json'
+    (file.endsWith('.json') || file.endsWith('.abc')) && file !== 'index.json'
   );
   
   console.log(`Found ${patternFiles.length} pattern files`);
@@ -32,13 +32,33 @@ try {
   // Read each pattern file and extract metadata
   const patterns = patternFiles.map(filename => {
     const filePath = path.join(patternsDir, filename);
-    const content = JSON.parse(fs.readFileSync(filePath, 'utf8'));
     
-    return {
-      filename,
-      category: content.difficulty || 'intermediate',
-      name: content.name
-    };
+    if (filename.endsWith('.abc')) {
+      // Parse ABC file
+      const content = fs.readFileSync(filePath, 'utf8');
+      
+      // Extract metadata from ABC headers
+      const titleMatch = content.match(/^T:\s*(.+)$/m);
+      const infoMatch = content.match(/^%%difficulty\s+(.+)$/m);
+      
+      const name = titleMatch ? titleMatch[1] : filename.replace('.abc', '');
+      const category = infoMatch ? infoMatch[1].toLowerCase() : 'intermediate';
+      
+      return {
+        filename,
+        category,
+        name
+      };
+    } else {
+      // Parse JSON file
+      const content = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+      
+      return {
+        filename,
+        category: content.difficulty || 'intermediate',
+        name: content.name
+      };
+    }
   });
   
   // Sort patterns: first by category, then alphabetically by name
@@ -60,6 +80,8 @@ try {
   console.log(`   - Beginner: ${patterns.filter(p => p.category === 'beginner').length}`);
   console.log(`   - Intermediate: ${patterns.filter(p => p.category === 'intermediate').length}`);
   console.log(`   - Advanced: ${patterns.filter(p => p.category === 'advanced').length}`);
+  console.log(`   - JSON files: ${patterns.filter(p => p.filename.endsWith('.json')).length}`);
+  console.log(`   - ABC files: ${patterns.filter(p => p.filename.endsWith('.abc')).length}`);
   
 } catch (error) {
   console.error('❌ Error updating index.json:', error.message);

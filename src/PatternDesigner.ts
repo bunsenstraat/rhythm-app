@@ -977,11 +977,31 @@ export class PatternDesigner {
         throw new Error(`Failed to load preset pattern: ${response.statusText}`);
       }
       
-      const presetData = await response.json();
-      this.pattern = presetData.pattern;
-      this.updateDisplay();
-      Toast.success(`Loaded: ${presetData.name}`, 4000);
-      Toast.info(presetData.description, 5000);
+      // Check if this is an ABC file or JSON file
+      if (filename.endsWith('.abc')) {
+        const abcContent = await response.text();
+        const notes = this.parseABCNotation(abcContent);
+        
+        if (notes.length === 0) {
+          throw new Error('Failed to parse ABC file');
+        }
+        
+        // Extract name from ABC file (T: line) or use filename
+        const titleMatch = abcContent.match(/^T:\s*(.+)$/m);
+        const name = titleMatch ? titleMatch[1] : filename.replace('.abc', '');
+        
+        this.pattern.notes = notes;
+        this.updateDisplay();
+        Toast.success(`Loaded: ${name}`, 4000);
+        Toast.info('Pattern imported from ABC notation', 5000);
+      } else {
+        // JSON file
+        const presetData = await response.json();
+        this.pattern = presetData.pattern;
+        this.updateDisplay();
+        Toast.success(`Loaded: ${presetData.name}`, 4000);
+        Toast.info(presetData.description, 5000);
+      }
     } catch (error) {
       console.error('Error loading preset pattern:', error);
       Toast.error('Failed to load preset pattern. Please try again.');

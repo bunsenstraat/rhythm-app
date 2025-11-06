@@ -21,6 +21,16 @@
       "name": "Rests and Notes"
     },
     {
+      "filename": "simple-abc-demo.abc",
+      "category": "beginner",
+      "name": "Simple ABC Demo"
+    },
+    {
+      "filename": "abc-syncopation.abc",
+      "category": "intermediate",
+      "name": "ABC Syncopation Pattern"
+    },
+    {
       "filename": "bossa-nova-basic.json",
       "category": "intermediate",
       "name": "Basic Bossa Nova"
