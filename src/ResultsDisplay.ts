@@ -185,6 +185,10 @@ export class ResultsDisplay {
       </table>
     `);
     
+    // Calculate extra taps
+    const matchedTaps = this.results.taps.filter(t => t.noteIndex !== undefined);
+    const extraTaps = this.results.taps.length - matchedTaps.length;
+    
     // Add summary stats
     rows.push(`
       <div class="analytics-summary">
@@ -193,6 +197,8 @@ export class ResultsDisplay {
           <li><strong>Total Expected Notes:</strong> ${this.results.expectedTaps.length}</li>
           <li><strong>Notes Hit:</strong> ${this.results.tappedNotes}</li>
           <li><strong>Notes Missed:</strong> ${this.results.missedNotes}</li>
+          <li><strong>Total Taps:</strong> ${this.results.taps.length}</li>
+          ${extraTaps > 0 ? `<li style="color: #f59e0b;"><strong>⚠️ Extra Taps:</strong> ${extraTaps} (penalty applied)</li>` : ''}
           <li><strong>Average Timing Offset:</strong> ${Math.abs(this.results.accuracy).toFixed(1)}ms</li>
           <li><strong>Hit Rate:</strong> ${((this.results.tappedNotes / this.results.expectedTaps.length) * 100).toFixed(1)}%</li>
         </ul>

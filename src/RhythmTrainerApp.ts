@@ -208,26 +208,39 @@ export class RhythmTrainerApp {
 
   private calculateResults(taps: TapEvent[], expectedTaps: number[]): TestResults {
     const totalNotes = expectedTaps.length;
-    const tappedNotes = taps.length;
-    const missedNotes = Math.max(0, totalNotes - tappedNotes);
     
-    // Calculate average accuracy
+    // Count only taps that were matched to notes (have noteIndex set)
+    const matchedTaps = taps.filter(t => t.noteIndex !== undefined);
+    const tappedNotes = matchedTaps.length;
+    const missedNotes = totalNotes - tappedNotes;
+    const extraTaps = taps.length - matchedTaps.length;
+    
+    // Calculate average accuracy (only for matched taps)
     let totalAccuracy = 0;
-    for (const tap of taps) {
+    for (const tap of matchedTaps) {
       totalAccuracy += Math.abs(tap.accuracy);
     }
-    const avgAccuracy = taps.length > 0 ? totalAccuracy / taps.length : 0;
+    const avgAccuracy = matchedTaps.length > 0 ? totalAccuracy / matchedTaps.length : 0;
     
     // Calculate score (0-100)
-    // Perfect score if all notes hit with perfect timing
-    // Reduce score based on missed notes and timing accuracy
+    // Perfect score requires: all notes hit, good timing, no extra taps
     let score = 0;
     
     if (totalNotes > 0) {
+      // Base score: hit ratio (70% weight)
       const hitRatio = tappedNotes / totalNotes;
-      const timingScore = Math.max(0, 100 - avgAccuracy / 2); // Max 200ms = 0 points
-      score = Math.round(hitRatio * timingScore);
+      const hitScore = hitRatio * 70;
+      
+      // Timing score (20% weight): perfect timing = 20 points
+      const timingScore = Math.max(0, 20 - avgAccuracy / 10);
+      
+      // Penalty for extra taps (10% weight): each extra tap reduces score
+      const extraTapPenalty = Math.min(10, extraTaps * 2); // 2 points per extra tap, max 10 points
+      
+      score = Math.round(hitScore + timingScore - extraTapPenalty);
     }
+    
+    console.log(`[Scoring] Total notes: ${totalNotes}, Matched taps: ${tappedNotes}, Extra taps: ${extraTaps}, Score: ${score}`);
     
     return {
       totalNotes,
