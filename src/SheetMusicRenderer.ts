@@ -151,6 +151,7 @@ export class SheetMusicRenderer {
     // Rests: z=quarter rest, z2=half rest, etc.
     // Triplets: (3CDE = 3 notes in time of 2
     // Barlines: | separates measures
+    // Beaming: Notes WITHOUT spaces are beamed together. Spaces break beams.
     
     const timeSignature = `${this.pattern.beatsPerBar}/4`;
     const beatValues: Record<string, number> = {
@@ -165,9 +166,10 @@ export class SheetMusicRenderer {
     
     let abcNotes = '';
     let currentBarBeats = 0;
+    let currentBeatInBar = 0; // Track position within bar for beaming
     let i = 0;
     
-    // Convert each note to ABC notation with barlines
+    // Convert each note to ABC notation with proper beaming
     while (i < this.pattern.notes.length) {
       const note = this.pattern.notes[i];
       
@@ -184,34 +186,56 @@ export class SheetMusicRenderer {
           this.getNoteString(this.pattern.notes[i + 2])
         ].join('');
         
-        abcNotes += `(3${tripletNotes} `;
+        abcNotes += `(3${tripletNotes}`;
         
         // Add up triplet beats (3 triplets = 2 beats for quarter triplets, 1 beat for eighth triplets)
         const tripletBeats = note.duration === 'q3' ? 2 : 1;
         currentBarBeats += tripletBeats;
+        currentBeatInBar += tripletBeats;
         i += 3; // Skip the next 2 notes
+        
+        // Add space after triplet to break beaming
+        abcNotes += ' ';
       } else {
         // Regular note
-        const noteStr = this.getNoteString(note);
-        // Add tie if this note has a tie marker
-        abcNotes += noteStr + (note.tie ? '-' : '') + ' ';
         let noteBeats = beatValues[note.duration];
         if (note.dotted) {
           noteBeats *= 1.5; // Dot adds 50% to duration
         }
+        
+        // Determine if we should add a space before this note (to break beaming)
+        // Rule: For eighth notes and shorter, beam by half-beat in 4/4 time
+        const shouldBreakBeam = this.shouldBreakBeam(note.duration, currentBeatInBar);
+        
+        if (shouldBreakBeam && abcNotes.length > 0 && !abcNotes.endsWith(' ') && !abcNotes.endsWith('|')) {
+          abcNotes += ' ';
+        }
+        
+        const noteStr = this.getNoteString(note);
+        // Add tie if this note has a tie marker
+        abcNotes += noteStr + (note.tie ? '-' : '');
+        
         currentBarBeats += noteBeats;
+        currentBeatInBar += noteBeats;
         i++;
+        
+        // Add space after longer notes or to end beaming groups
+        if (note.duration === 'q' || note.duration === 'h' || note.duration === 'w' || note.dotted) {
+          abcNotes += ' ';
+        }
       }
       
       // Check if we've completed a bar (with small tolerance for floating point)
       if (Math.abs(currentBarBeats - this.pattern.beatsPerBar) < 0.01) {
         abcNotes += '| ';
         currentBarBeats = 0;
+        currentBeatInBar = 0;
       } else if (currentBarBeats > this.pattern.beatsPerBar + 0.01) {
         // We've exceeded the bar, add barline before this note
         // This shouldn't happen with well-formed patterns, but handle it gracefully
         abcNotes += '| ';
         currentBarBeats = beatValues[note.duration];
+        currentBeatInBar = beatValues[note.duration];
       }
     }
     
@@ -226,6 +250,25 @@ M:${timeSignature}
 L:1/4
 K:C perc
 ${abcNotes}]`;
+  }
+  
+  /**
+   * Determines if beaming should be broken before this note
+   * In 4/4 time, eighth notes should beam in groups of 2 (half-beat)
+   * Don't beam across beat boundaries or middle of bar
+   */
+  private shouldBreakBeam(duration: string, currentBeatInBar: number): boolean {
+    // Only beam eighth and sixteenth notes
+    if (duration !== '8' && duration !== '16') {
+      return false; // Quarters and longer don't beam anyway
+    }
+    
+    // Break beam at the start of each beat (every 1.0 beats)
+    // For eighth notes in 4/4: beam pairs together, break at each beat (1.0, 2.0, 3.0, 4.0)
+    const beatBoundary = Math.round(currentBeatInBar);
+    const isOnBeatBoundary = Math.abs(currentBeatInBar - beatBoundary) < 0.01 && beatBoundary > 0;
+    
+    return isOnBeatBoundary;
   }
 
   private getNoteString(note: Note): string {
