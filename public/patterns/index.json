@@ -6,6 +6,11 @@
       "name": "Half and Whole Notes"
     },
     {
+      "filename": "test-complex.abc",
+      "category": "intermediate",
+      "name": "Mixed Rhythms with Ties"
+    },
+    {
       "filename": "pattern9.abc",
       "category": "intermediate",
       "name": "Pattern9"
