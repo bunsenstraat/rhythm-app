@@ -155,7 +155,8 @@ export class RhythmPlayer {
     // Render sheet music
     const sheetMusicContainer = document.getElementById('sheet-music-player');
     if (sheetMusicContainer) {
-      this.sheetMusicRenderer = new SheetMusicRenderer(sheetMusicContainer, this.pattern);
+      // Use 4 bars per line for the player view
+      this.sheetMusicRenderer = new SheetMusicRenderer(sheetMusicContainer, this.pattern, undefined, 4);
       this.sheetMusicRenderer.render();
     }
   }

@@ -7,11 +7,13 @@ export class SheetMusicRenderer {
   private container: HTMLElement;
   private pattern: RhythmPattern;
   private onNoteClick?: (index: number, event: MouseEvent) => void;
+  private barsPerLine: number = 4; // Default: 4 bars per line
 
-  constructor(container: HTMLElement, pattern: RhythmPattern, onNoteClick?: (index: number, event: MouseEvent) => void) {
+  constructor(container: HTMLElement, pattern: RhythmPattern, onNoteClick?: (index: number, event: MouseEvent) => void, barsPerLine: number = 4) {
     this.container = container;
     this.pattern = pattern;
     this.onNoteClick = onNoteClick;
+    this.barsPerLine = barsPerLine;
   }
 
   setCurrentNote(index: number) {
@@ -167,6 +169,7 @@ export class SheetMusicRenderer {
     let abcNotes = '';
     let currentBarBeats = 0;
     let currentBeatInBar = 0; // Track position within bar for beaming
+    let barCount = 0; // Track number of completed bars
     let i = 0;
     
     // Convert each note to ABC notation with proper beaming
@@ -227,13 +230,27 @@ export class SheetMusicRenderer {
       
       // Check if we've completed a bar (with small tolerance for floating point)
       if (Math.abs(currentBarBeats - this.pattern.beatsPerBar) < 0.01) {
+        barCount++;
         abcNotes += '| ';
+        
+        // Add line break after every barsPerLine bars
+        if (barCount % this.barsPerLine === 0) {
+          abcNotes += '\n';
+        }
+        
         currentBarBeats = 0;
         currentBeatInBar = 0;
       } else if (currentBarBeats > this.pattern.beatsPerBar + 0.01) {
         // We've exceeded the bar, add barline before this note
         // This shouldn't happen with well-formed patterns, but handle it gracefully
+        barCount++;
         abcNotes += '| ';
+        
+        // Add line break after every barsPerLine bars
+        if (barCount % this.barsPerLine === 0) {
+          abcNotes += '\n';
+        }
+        
         currentBarBeats = beatValues[note.duration];
         currentBeatInBar = beatValues[note.duration];
       }

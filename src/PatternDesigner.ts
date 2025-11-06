@@ -18,6 +18,7 @@ export class PatternDesigner {
   private audioEngine: AudioEngine;
   private isPlaying: boolean = false;
   private selectedNotes: Set<number> = new Set(); // Track selected note indices
+  private barsPerLine: number = 4; // Default: 4 bars per line in sheet music
 
   constructor(
     container: HTMLElement, 
@@ -137,6 +138,17 @@ export class PatternDesigner {
           <div class="abc-tools">
             <button id="export-abc-btn" class="mgmt-btn">📤 Export to ABC</button>
             <button id="import-abc-btn" class="mgmt-btn">📥 Import from ABC</button>
+          </div>
+          
+          <div class="sheet-music-settings" style="margin-top: 1rem;">
+            <label for="bars-per-line">Bars per line: 
+              <select id="bars-per-line" style="padding: 0.3rem; margin-left: 0.5rem;">
+                <option value="2">2</option>
+                <option value="4" selected>4</option>
+                <option value="8">8</option>
+                <option value="16">All</option>
+              </select>
+            </label>
           </div>
           <div id="abc-output" class="abc-output" style="display: none;">
             <label>ABC Notation:</label>
@@ -363,6 +375,14 @@ export class PatternDesigner {
     this.container.querySelector('#copy-abc-btn')?.addEventListener('click', () => this.copyABCToClipboard());
     this.container.querySelector('#parse-abc-btn')?.addEventListener('click', () => this.parseABCInput());
     this.container.querySelector('#cancel-abc-btn')?.addEventListener('click', () => this.hideABCInput());
+    
+    // Bars per line selector
+    const barsPerLineSelect = this.container.querySelector('#bars-per-line') as HTMLSelectElement;
+    barsPerLineSelect?.addEventListener('change', (e) => {
+      const value = parseInt((e.target as HTMLSelectElement).value);
+      this.barsPerLine = value;
+      this.renderSheetMusic(); // Re-render with new setting
+    });
     
     // Load saved patterns list
     this.renderSavedPatternsList();
@@ -803,7 +823,8 @@ export class PatternDesigner {
       this.sheetMusicRenderer = new SheetMusicRenderer(
         sheetMusicContainer, 
         this.pattern,
-        (index: number, event: MouseEvent) => this.handleSheetMusicNoteClick(index, event)
+        (index: number, event: MouseEvent) => this.handleSheetMusicNoteClick(index, event),
+        this.barsPerLine
       );
       this.sheetMusicRenderer.render();
     }
@@ -1089,7 +1110,7 @@ export class PatternDesigner {
   private exportToABC() {
     // Create a temporary SheetMusicRenderer to generate ABC notation
     const tempDiv = document.createElement('div');
-    const renderer = new SheetMusicRenderer(tempDiv, this.pattern);
+    const renderer = new SheetMusicRenderer(tempDiv, this.pattern, undefined, this.barsPerLine);
     
     // Get the ABC notation string
     const abcNotation = (renderer as any).convertToABC();
