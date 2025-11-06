@@ -7,6 +7,9 @@ on:
       - 'public/patterns/source-musicxml/*.musicxml'
   workflow_dispatch:  # Allow manual triggering
 
+permissions:
+  contents: write  # Allow the action to push changes
+
 jobs:
   convert:
     runs-on: ubuntu-latest
