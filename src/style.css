@@ -329,6 +329,93 @@ body {
   cursor: not-allowed;
 }
 
+/* Rhythm Validation Panel */
+.rhythm-validation {
+  margin: 2rem 0;
+}
+
+.validation-panel {
+  background: #16213e;
+  border-radius: 12px;
+  padding: 1.5rem;
+  border-left: 4px solid #667eea;
+}
+
+.validation-status {
+  font-size: 1rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+  padding: 0.75rem;
+  border-radius: 8px;
+}
+
+.validation-success {
+  background: rgba(16, 185, 129, 0.2);
+  color: #10b981;
+  border: 1px solid #10b981;
+}
+
+.validation-warning {
+  background: rgba(245, 158, 11, 0.2);
+  color: #f59e0b;
+  border: 1px solid #f59e0b;
+}
+
+.validation-errors,
+.validation-warnings {
+  margin-bottom: 1rem;
+}
+
+.validation-error {
+  color: #ef4444;
+  padding: 0.5rem;
+  margin: 0.5rem 0;
+  background: rgba(239, 68, 68, 0.1);
+  border-radius: 6px;
+  font-size: 0.9rem;
+}
+
+.validation-warning-item {
+  color: #f59e0b;
+  padding: 0.5rem;
+  margin: 0.5rem 0;
+  background: rgba(245, 158, 11, 0.1);
+  border-radius: 6px;
+  font-size: 0.9rem;
+}
+
+.validation-actions {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  margin-top: 1rem;
+}
+
+.validation-btn {
+  padding: 0.6rem 1.2rem;
+  background: #0f3460;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-size: 0.9rem;
+}
+
+.validation-btn:hover {
+  background: #1a4d7a;
+  transform: translateY(-1px);
+}
+
+.validation-btn.primary {
+  background: #667eea;
+}
+
+.validation-btn.primary:hover {
+  background: #5568d3;
+}
+
 .controls {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));

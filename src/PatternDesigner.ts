@@ -4,6 +4,7 @@ import type { RhythmPattern, NoteDuration, NoteType, TestResults } from './types
 import { SheetMusicRenderer } from './SheetMusicRenderer';
 import { AudioEngine } from './AudioEngine';
 import { Toast } from './Toast';
+import { RhythmValidator } from './RhythmValidator';
 
 export class PatternDesigner {
   private container: HTMLElement;
@@ -117,6 +118,8 @@ export class PatternDesigner {
           <button id="play-pattern-btn" class="action-btn play-btn">▶️ Play Pattern</button>
           <button id="clear-all-btn" class="action-btn">Clear All</button>
         </div>
+        
+        <div class="rhythm-validation" id="rhythm-validation"></div>
         
         <div class="pattern-management">
           <h3>Pattern Management</h3>
@@ -673,7 +676,97 @@ export class PatternDesigner {
     
     this.renderSheetMusic();
     this.updateSelectionDisplay();
+    this.renderValidation();
     this.onPatternChange(this.pattern);
+  }
+
+  private renderValidation() {
+    const validationContainer = this.container.querySelector('#rhythm-validation');
+    if (!validationContainer || this.pattern.notes.length === 0) {
+      if (validationContainer) validationContainer.innerHTML = '';
+      return;
+    }
+
+    const validation = RhythmValidator.validate(this.pattern);
+    const barsAnalysis = RhythmValidator.analyzeBars(this.pattern);
+    
+    // Count complete vs incomplete bars
+    const incompleteBars = barsAnalysis.filter(b => b.deficit < -0.001).length;
+    const overflowBars = barsAnalysis.filter(b => b.deficit > 0.001).length;
+    const completeBars = barsAnalysis.filter(b => Math.abs(b.deficit) < 0.001).length;
+
+    let html = '<div class="validation-panel">';
+    
+    // Status indicator
+    if (validation.isValid && validation.warnings.length === 0) {
+      html += '<div class="validation-status validation-success">✓ Pattern is valid</div>';
+    } else {
+      html += '<div class="validation-status validation-warning">';
+      html += `<strong>Pattern Analysis:</strong> ${completeBars} complete, `;
+      if (incompleteBars > 0) html += `${incompleteBars} incomplete, `;
+      if (overflowBars > 0) html += `${overflowBars} overflow`;
+      html += '</div>';
+    }
+
+    // Errors
+    if (validation.errors.length > 0) {
+      html += '<div class="validation-errors">';
+      validation.errors.forEach(error => {
+        html += `<div class="validation-error">❌ ${error}</div>`;
+      });
+      html += '</div>';
+    }
+
+    // Warnings
+    if (validation.warnings.length > 0) {
+      html += '<div class="validation-warnings">';
+      validation.warnings.forEach(warning => {
+        html += `<div class="validation-warning-item">⚠️  ${warning}</div>`;
+      });
+      html += '</div>';
+    }
+
+    // Auto-correct buttons
+    if (validation.errors.length > 0 || validation.warnings.length > 0) {
+      html += '<div class="validation-actions">';
+      
+      if (incompleteBars > 0) {
+        html += '<button id="auto-fill-btn" class="validation-btn">Auto-Fill with Rests</button>';
+      }
+      
+      if (overflowBars > 0) {
+        html += '<button id="auto-trim-btn" class="validation-btn">Trim Overflow (Add Ties)</button>';
+      }
+      
+      html += '<button id="auto-correct-btn" class="validation-btn primary">Smart Auto-Correct</button>';
+      html += '</div>';
+    }
+
+    html += '</div>';
+    
+    validationContainer.innerHTML = html;
+
+    // Attach event listeners for auto-correct buttons
+    this.container.querySelector('#auto-fill-btn')?.addEventListener('click', () => {
+      this.pattern = RhythmValidator.autoFillRests(this.pattern);
+      this.updateDisplay();
+      Toast.success('Added rests to incomplete bars');
+    });
+
+    this.container.querySelector('#auto-trim-btn')?.addEventListener('click', () => {
+      this.pattern = RhythmValidator.trimOverflow(this.pattern);
+      this.updateDisplay();
+      Toast.success('Trimmed overflow and added ties');
+    });
+
+    this.container.querySelector('#auto-correct-btn')?.addEventListener('click', () => {
+      const result = RhythmValidator.autoCorrect(this.pattern);
+      if (result.correctedPattern) {
+        this.pattern = result.correctedPattern;
+        this.updateDisplay();
+        Toast.success('Pattern auto-corrected!');
+      }
+    });
   }
 
   private renderSheetMusic() {
