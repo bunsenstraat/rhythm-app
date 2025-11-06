@@ -81,6 +81,11 @@
       "name": "Tied Notes"
     },
     {
+      "filename": "abc-bossa-pattern.abc",
+      "category": "advanced",
+      "name": "ABC Bossa Pattern"
+    },
+    {
       "filename": "afro-bossa.json",
       "category": "advanced",
       "name": "Afro-Bossa 8-Bar"
