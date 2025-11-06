@@ -1345,6 +1345,61 @@ button:hover {
   color: #888;
 }
 
+/* Results Sheet Music */
+.results-sheet-music {
+  margin: 3rem 0;
+  background: #16213e;
+  border-radius: 12px;
+  padding: 1.5rem;
+}
+
+.results-sheet-music h3 {
+  color: #ccc;
+  margin-top: 0;
+  margin-bottom: 1rem;
+}
+
+.legend {
+  display: flex;
+  gap: 2rem;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #ccc;
+  font-size: 0.9rem;
+}
+
+.legend-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.legend-dot.green {
+  background: #22c55e;
+}
+
+.legend-dot.orange {
+  background: #f59e0b;
+}
+
+.legend-dot.red {
+  background: #ef4444;
+}
+
+#results-sheet-container {
+  background: white;
+  border-radius: 8px;
+  padding: 1rem;
+  margin-top: 1rem;
+}
+
 /* Responsive */
 @media (max-width: 768px) {
   .rhythm-trainer-app {

@@ -199,7 +199,8 @@ export class RhythmTrainerApp {
     const resultsContainer = document.getElementById('results-container')!;
     new ResultsDisplay(
       resultsContainer, 
-      results, 
+      results,
+      this.pattern, // Pass the pattern for sheet music annotation
       () => this.startPractice(), // Try Again - restart practice
       () => this.showDesigner()   // Back to Designer
     );

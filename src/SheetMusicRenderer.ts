@@ -1,7 +1,7 @@
 // Sheet music renderer using ABC.js
 
 import abcjs from 'abcjs';
-import type { RhythmPattern, Note } from './types';
+import type { RhythmPattern, Note, TestResults } from './types';
 
 export class SheetMusicRenderer {
   private container: HTMLElement;
@@ -18,6 +18,137 @@ export class SheetMusicRenderer {
 
   setCurrentNote(index: number) {
     this.highlightNote(index);
+  }
+
+  /**
+   * Annotate the sheet music with test results
+   * Colors notes based on tap accuracy:
+   * - Green: Hit correctly (within tolerance)
+   * - Orange: Hit but timing was off (early/late)
+   * - Red: Missed completely
+   */
+  annotateWithResults(results: TestResults, timingTolerance: number = 100) {
+    console.log('[SheetMusic] Annotating with test results:', results);
+    console.log('[SheetMusic] Pattern notes:', this.pattern.notes);
+    
+    // Try different selectors to find note elements
+    let elements = this.container.querySelectorAll('.abcjs-note');
+    if (elements.length === 0) {
+      // Try alternative selector
+      elements = this.container.querySelectorAll('g[data-name="note"]');
+      console.log('[SheetMusic] Using g[data-name="note"] selector, found', elements.length, 'elements');
+    } else {
+      console.log('[SheetMusic] Using .abcjs-note selector, found', elements.length, 'elements');
+    }
+    
+    // Calculate expected time for each note
+    const beatDuration = (60 / 120) * 1000; // TODO: Get actual tempo
+    const beatValues: Record<string, number> = {
+      'w': 4, 'h': 2, 'q': 1, '8': 0.5, '16': 0.25, 'q3': 2/3, '83': 1/3
+    };
+    
+    // Build a map of note pattern index -> expected time
+    // Skip tied notes (notes that are tied FROM the previous note)
+    const noteExpectedTimes = new Map<number, number>();
+    let currentTime = 0;
+    
+    for (let i = 0; i < this.pattern.notes.length; i++) {
+      const note = this.pattern.notes[i];
+      const previousNote = i > 0 ? this.pattern.notes[i - 1] : null;
+      const isTiedFromPrevious = previousNote && previousNote.tie;
+      
+      // Only add notes that should be tapped (not rests, not tied from previous)
+      if (note.type === 'note' && !isTiedFromPrevious) {
+        noteExpectedTimes.set(i, currentTime);
+      }
+      
+      let beats = beatValues[note.duration];
+      if (note.dotted) beats *= 1.5;
+      currentTime += beats * beatDuration;
+    }
+    
+    console.log('[SheetMusic] Note expected times:', Array.from(noteExpectedTimes.entries()));
+    
+    // Build a map: note pattern index -> tap result
+    const noteHits = new Map<number, { hit: boolean; accuracy: number }>();
+    
+    // Mark all notes as missed initially
+    for (const [noteIndex, _] of noteExpectedTimes) {
+      noteHits.set(noteIndex, { hit: false, accuracy: 0 });
+    }
+    
+    // Match each tap to its corresponding note by expectedTime
+    for (const tap of results.taps) {
+      // Find which note this tap corresponds to
+      let matchedNoteIndex = -1;
+      let minDiff = Infinity;
+      
+      for (const [noteIndex, expectedTime] of noteExpectedTimes) {
+        const diff = Math.abs(tap.expectedTime - expectedTime);
+        if (diff < minDiff && diff < timingTolerance) {
+          minDiff = diff;
+          matchedNoteIndex = noteIndex;
+        }
+      }
+      
+      if (matchedNoteIndex !== -1) {
+        noteHits.set(matchedNoteIndex, {
+          hit: true,
+          accuracy: tap.accuracy
+        });
+        console.log(`[SheetMusic] Matched tap (expectedTime: ${tap.expectedTime}ms) to note ${matchedNoteIndex} (accuracy: ${tap.accuracy}ms)`);
+      }
+    }
+    
+    console.log('[SheetMusic] Note hits map:', Array.from(noteHits.entries()));
+    
+    // Apply colors to the SVG elements
+    // Match visual notes to pattern notes, skipping tied notes
+    let visualNoteIndex = 0;
+    
+    for (let i = 0; i < this.pattern.notes.length; i++) {
+      const note = this.pattern.notes[i];
+      const previousNote = i > 0 ? this.pattern.notes[i - 1] : null;
+      const isTiedFromPrevious = previousNote && previousNote.tie;
+      
+      if (note.type === 'note') {
+        // Only color notes that should have been tapped (not tied from previous)
+        if (!isTiedFromPrevious && visualNoteIndex < elements.length && noteHits.has(i)) {
+          const el = elements[visualNoteIndex];
+          const hitInfo = noteHits.get(i)!;
+          
+          let color = '#000000';
+          if (!hitInfo.hit) {
+            color = '#ef4444'; // Red - missed
+          } else if (Math.abs(hitInfo.accuracy) < timingTolerance / 2) {
+            color = '#22c55e'; // Green - perfect
+          } else {
+            color = '#f59e0b'; // Orange - timing off
+          }
+          
+          console.log(`[SheetMusic] Coloring note at pattern index ${i}, visual index ${visualNoteIndex}: ${color} (hit: ${hitInfo.hit}, accuracy: ${hitInfo.accuracy}ms)`);
+          
+          // Find all paths in this note group
+          const notePaths = el.querySelectorAll('path');
+          console.log(`[SheetMusic] Found ${notePaths.length} paths in note element`);
+          
+          notePaths.forEach(path => {
+            path.setAttribute('fill', color);
+            path.setAttribute('stroke', color);
+          });
+          
+          // Also color child elements with fill attribute
+          const fillElements = el.querySelectorAll('[fill]');
+          fillElements.forEach(fillEl => {
+            (fillEl as SVGElement).setAttribute('fill', color);
+            if ((fillEl as SVGElement).hasAttribute('stroke')) {
+              (fillEl as SVGElement).setAttribute('stroke', color);
+            }
+          });
+        }
+        visualNoteIndex++;
+      }
+    }
   }
 
   private highlightNote(index: number) {

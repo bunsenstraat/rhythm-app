@@ -1,21 +1,26 @@
 // Results display component
 
-import type { TestResults } from './types';
+import type { TestResults, RhythmPattern } from './types';
+import { SheetMusicRenderer } from './SheetMusicRenderer';
 
 export class ResultsDisplay {
   private container: HTMLElement;
   private results: TestResults;
+  private pattern: RhythmPattern | null;
   private onRestart: () => void;
   private onBackToDesigner: () => void;
+  private sheetRenderer: SheetMusicRenderer | null = null;
 
   constructor(
     container: HTMLElement, 
-    results: TestResults, 
+    results: TestResults,
+    pattern: RhythmPattern | null,
     onRestart: () => void,
     onBackToDesigner: () => void
   ) {
     this.container = container;
     this.results = results;
+    this.pattern = pattern;
     this.onRestart = onRestart;
     this.onBackToDesigner = onBackToDesigner;
     this.render();
@@ -23,7 +28,7 @@ export class ResultsDisplay {
 
   private render() {
     const avgAccuracy = Math.abs(this.results.accuracy);
-    const accuracyRating = this.getAccuracyRating(avgAccuracy);
+    const scoreRating = this.getScoreRating(this.results.score);
     
     this.container.innerHTML = `
       <div class="results-display">
@@ -53,10 +58,22 @@ export class ResultsDisplay {
           </div>
           
           <div class="stat">
-            <div class="stat-value">${accuracyRating}</div>
+            <div class="stat-value">${scoreRating}</div>
             <div class="stat-label">Rating</div>
           </div>
         </div>
+        
+        ${this.pattern ? `
+          <div class="results-sheet-music">
+            <h3>Your Performance</h3>
+            <div class="legend">
+              <span class="legend-item"><span class="legend-dot green"></span> Perfect timing</span>
+              <span class="legend-item"><span class="legend-dot orange"></span> Timing off</span>
+              <span class="legend-item"><span class="legend-dot red"></span> Missed</span>
+            </div>
+            <div id="results-sheet-container"></div>
+          </div>
+        ` : ''}
         
         <div class="tap-details">
           <h3>Tap Breakdown</h3>
@@ -71,6 +88,17 @@ export class ResultsDisplay {
         </div>
       </div>
     `;
+
+    // Render annotated sheet music if pattern available
+    if (this.pattern) {
+      const sheetContainer = this.container.querySelector('#results-sheet-container') as HTMLElement;
+      if (sheetContainer) {
+        this.sheetRenderer = new SheetMusicRenderer(sheetContainer, this.pattern);
+        this.sheetRenderer.render();
+        // Annotate with test results
+        this.sheetRenderer.annotateWithResults(this.results);
+      }
+    }
 
     this.container.querySelector('#try-again-button')?.addEventListener('click', () => {
       this.onRestart();
@@ -110,11 +138,12 @@ export class ResultsDisplay {
     return 'poor';
   }
 
-  private getAccuracyRating(avgAccuracy: number): string {
-    if (avgAccuracy < 50) return 'Perfect!';
-    if (avgAccuracy < 100) return 'Great';
-    if (avgAccuracy < 150) return 'Good';
-    if (avgAccuracy < 200) return 'Fair';
+  private getScoreRating(score: number): string {
+    if (score >= 95) return 'Perfect!';
+    if (score >= 85) return 'Excellent';
+    if (score >= 75) return 'Great';
+    if (score >= 65) return 'Good';
+    if (score >= 50) return 'Fair';
     return 'Needs Work';
   }
 }
