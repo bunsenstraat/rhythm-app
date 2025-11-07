@@ -22,7 +22,9 @@ export class RhythmValidator {
   private static readonly BEAT_VALUES: Record<NoteDuration, number> = {
     'w': 4,
     'h': 2,
+    'h.': 3,
     'q': 1,
+    'q.': 1.5,
     '8': 0.5,
     '16': 0.25,
     'q3': 2/3,

@@ -1,6 +1,6 @@
 // Core types for the rhythm trainer app
 
-export type NoteDuration = 'w' | 'h' | 'q' | '8' | '16' | 'q3' | '83';
+export type NoteDuration = 'w' | 'h' | 'h.' | 'q' | 'q.' | '8' | '16' | 'q3' | '83';
 export type NoteType = 'note' | 'rest';
 
 export interface Note {

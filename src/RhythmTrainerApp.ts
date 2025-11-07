@@ -336,10 +336,38 @@ export class RhythmTrainerApp {
             <button class="start-challenge-btn" data-difficulty="easy">Start Easy</button>
           </div>
           
+          <div class="difficulty-card" data-difficulty="eighth-basic">
+            <div class="difficulty-icon">�</div>
+            <h3>Eighth Notes - Basic</h3>
+            <p>Steady eighth notes<br>Occasional quarters</p>
+            <button class="start-challenge-btn" data-difficulty="eighth-basic">Start</button>
+          </div>
+          
+          <div class="difficulty-card" data-difficulty="eighth-syncopation">
+            <div class="difficulty-icon">🎶</div>
+            <h3>Eighth Notes - Syncopation</h3>
+            <p>Off-beat patterns<br>Ties and syncopation</p>
+            <button class="start-challenge-btn" data-difficulty="eighth-syncopation">Start</button>
+          </div>
+          
+          <div class="difficulty-card" data-difficulty="eighth-rests">
+            <div class="difficulty-icon">💫</div>
+            <h3>Eighth Notes - Rests</h3>
+            <p>Ties and rests<br>More challenging</p>
+            <button class="start-challenge-btn" data-difficulty="eighth-rests">Start</button>
+          </div>
+          
+          <div class="difficulty-card" data-difficulty="eighth-cross-bar">
+            <div class="difficulty-icon">🌊</div>
+            <h3>Eighth Notes - Cross-Bar</h3>
+            <p>Ties across barlines<br>Longer rests (hard!)</p>
+            <button class="start-challenge-btn" data-difficulty="eighth-cross-bar">Start</button>
+          </div>
+          
           <div class="difficulty-card" data-difficulty="medium">
             <div class="difficulty-icon">🎵</div>
             <h3>Medium</h3>
-            <p>Eighth notes and rests<br>Basic syncopation</p>
+            <p>Mixed note values<br>Complex patterns</p>
             <button class="start-challenge-btn" data-difficulty="medium">Start Medium</button>
           </div>
           
@@ -365,7 +393,7 @@ export class RhythmTrainerApp {
     // Add event listeners for challenge buttons
     document.querySelectorAll('.start-challenge-btn').forEach(btn => {
       btn.addEventListener('click', (e) => {
-        const difficulty = (e.target as HTMLElement).dataset.difficulty as 'easy' | 'medium' | 'hard' | 'expert';
+        const difficulty = (e.target as HTMLElement).dataset.difficulty as 'easy' | 'eighth-basic' | 'eighth-syncopation' | 'eighth-rests' | 'eighth-cross-bar' | 'medium' | 'hard' | 'expert';
         this.startChallenge(difficulty);
       });
     });
@@ -580,7 +608,7 @@ export class RhythmTrainerApp {
     }
   }
   
-  private startChallenge(difficulty: 'easy' | 'medium' | 'hard' | 'expert') {
+  private startChallenge(difficulty: 'easy' | 'eighth-basic' | 'eighth-syncopation' | 'eighth-rests' | 'eighth-cross-bar' | 'medium' | 'hard' | 'expert') {
     const challenge = ChallengeGenerator.generateChallenge(difficulty);
     this.pattern = challenge.pattern;
     
