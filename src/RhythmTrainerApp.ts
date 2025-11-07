@@ -7,6 +7,7 @@ import { RhythmPlayer } from './RhythmPlayer';
 import { ResultsDisplay } from './ResultsDisplay';
 import { Toast } from './Toast';
 import { ChallengeGenerator } from './ChallengeGenerator';
+import { SheetMusicRenderer } from './SheetMusicRenderer';
 import abcjs from 'abcjs';
 import type { NoteDuration, NoteType } from './types';
 
@@ -243,7 +244,17 @@ export class RhythmTrainerApp {
   }
 
   private showResults(taps: TapEvent[], expectedTaps: number[]) {
-    // Calculate results
+    // IMPORTANT: Must annotate taps with noteIndex BEFORE calculating score
+    // The annotation process (in SheetMusicRenderer) populates tap.noteIndex
+    if (this.pattern) {
+      const tempDiv = document.createElement('div');
+      const tempRenderer = new SheetMusicRenderer(tempDiv, this.pattern, undefined, 4, this.toleranceMode);
+      tempRenderer.render();
+      // This populates tap.noteIndex for all matched taps
+      tempRenderer.annotateWithResults({ taps, expectedTaps, totalNotes: expectedTaps.length, tappedNotes: 0, missedNotes: 0, accuracy: 0, score: 0 });
+    }
+    
+    // NOW calculate results with noteIndex populated
     const results = this.calculateResults(taps, expectedTaps);
     
     // Store results for display when returning to designer
