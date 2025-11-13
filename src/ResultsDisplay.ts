@@ -44,6 +44,11 @@ export class ResultsDisplay {
     
     this.container.innerHTML = `
       <div class="results-display">
+        <div class="results-actions-top">
+          <button id="try-again-button" class="primary-button">🔄 Try Again</button>
+          <button id="back-designer-button" class="secondary-button">← Back to Designer</button>
+        </div>
+        
         <h2>Test Results</h2>
         
         <div class="score-card">
@@ -95,10 +100,7 @@ export class ResultsDisplay {
           </details>
         </div>
         
-        <div class="results-actions">
-          <button id="try-again-button" class="primary-button">🔄 Try Again</button>
-          <button id="back-designer-button" class="secondary-button">← Back to Designer</button>
-        </div>
+
       </div>
     `;
 

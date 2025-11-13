@@ -3,9 +3,7 @@
   line-height: 1.5;
   font-weight: 400;
 
-  color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #1a1a2e;
+  color-scheme: dark;
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -154,12 +152,9 @@ body {
 
 /* Default to black for player view */
 .sheet-music-container svg path {
-  fill: #000;
-  stroke: #000;
 }
 
 .sheet-music-container svg line {
-  stroke: #000;
 }
 
 /* ABC.js highlight styling */
@@ -1482,18 +1477,26 @@ button:hover {
   padding: 2rem;
 }
 
+.results-actions-top {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  margin-bottom: 1.5rem;
+}
+
 .results-display h2 {
   text-align: center;
-  font-size: 2.5rem;
+  font-size: 1.2rem;
   margin-top: 0;
+  margin-bottom: 1rem;
 }
 
 .score-card {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  border-radius: 20px;
-  padding: 3rem;
+  border-radius: 12px;
+  padding: 1rem;
   text-align: center;
-  margin: 2rem 0;
+  margin: 1rem 0;
 }
 
 .score-main {
@@ -1501,33 +1504,33 @@ button:hover {
 }
 
 .score-value {
-  font-size: 5rem;
+  font-size: 2rem;
   font-weight: 700;
   line-height: 1;
 }
 
 .score-label {
-  font-size: 1.5rem;
-  margin-top: 0.5rem;
+  font-size: 0.9rem;
+  margin-top: 0.3rem;
   opacity: 0.9;
 }
 
 .stats-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-  gap: 1.5rem;
-  margin: 2rem 0;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 0.8rem;
+  margin: 1rem 0;
 }
 
 .stat {
   background: #16213e;
-  border-radius: 12px;
-  padding: 1.5rem;
+  border-radius: 8px;
+  padding: 0.8rem;
   text-align: center;
 }
 
 .stat-value {
-  font-size: 2.5rem;
+  font-size: 1.5rem;
   font-weight: 700;
   color: #667eea;
 }
@@ -1774,6 +1777,10 @@ button:hover {
 .analytics-summary strong {
   color: #888;
   font-weight: 600;
+}
+
+.sheet-music-container {
+  color: black;
 }
 
 /* Results Sheet Music */

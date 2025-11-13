@@ -46,11 +46,6 @@ export class RhythmTrainerApp {
   private renderLayout() {
     this.container.innerHTML = `
       <div class="rhythm-trainer-app">
-        <header class="app-header">
-          <h1>🎵 Rhythm Trainer</h1>
-          <p class="app-subtitle">Design, Practice, and Perfect Your Rhythm</p>
-        </header>
-        
         <nav class="app-nav">
           <button id="nav-designer" class="nav-btn active">📝 Designer</button>
           <button id="nav-challenge" class="nav-btn">🎯 Challenge</button>
