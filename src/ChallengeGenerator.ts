@@ -11,6 +11,116 @@ export interface Challenge {
 
 export class ChallengeGenerator {
   /**
+   * Validate and fix bar boundaries in a pattern
+   * Ensures each bar has exactly the correct number of beats
+   */
+  private static validateAndFixBars(notes: Array<{ duration: NoteDuration; type: NoteType; tie?: boolean; dotted?: boolean }>, beatsPerBar: number): Array<{ duration: NoteDuration; type: NoteType; tie?: boolean; dotted?: boolean }> {
+    const beatValues: Record<NoteDuration, number> = {
+      'w': 4, 'h': 2, 'h.': 3, 'q': 1, 'q.': 1.5, '8': 0.5, '16': 0.25, 'q3': 2/3, '83': 1/3
+    };
+    
+    const fixedNotes: Array<{ duration: NoteDuration; type: NoteType; tie?: boolean; dotted?: boolean }> = [];
+    let currentBarBeats = 0;
+    
+    for (let i = 0; i < notes.length; i++) {
+      const note = notes[i];
+      let noteBeats = beatValues[note.duration] || 0;
+      if (note.dotted) noteBeats *= 1.5;
+      
+      // Check if adding this note would overflow the bar
+      if (currentBarBeats + noteBeats > beatsPerBar + 0.01) {
+        // Bar is about to overflow - need to split or adjust
+        const remainingInBar = beatsPerBar - currentBarBeats;
+        
+        if (remainingInBar > 0.01) {
+          // Fill the rest of current bar with a rest
+          if (Math.abs(remainingInBar - 2) < 0.01) {
+            fixedNotes.push({ duration: 'h', type: 'rest' });
+          } else if (Math.abs(remainingInBar - 1) < 0.01) {
+            fixedNotes.push({ duration: 'q', type: 'rest' });
+          } else if (Math.abs(remainingInBar - 0.5) < 0.01) {
+            fixedNotes.push({ duration: '8', type: 'rest' });
+          } else if (Math.abs(remainingInBar - 0.25) < 0.01) {
+            fixedNotes.push({ duration: '16', type: 'rest' });
+          }
+        }
+        
+        // Start new bar
+        currentBarBeats = 0;
+      }
+      
+      // Add the note
+      fixedNotes.push(note);
+      currentBarBeats += noteBeats;
+      
+      // Check if we completed a bar
+      if (Math.abs(currentBarBeats - beatsPerBar) < 0.01) {
+        currentBarBeats = 0;
+      }
+    }
+    
+    // Fill last bar if incomplete
+    if (currentBarBeats > 0.01 && currentBarBeats < beatsPerBar - 0.01) {
+      const remaining = beatsPerBar - currentBarBeats;
+      
+      if (Math.abs(remaining - 2) < 0.01) {
+        fixedNotes.push({ duration: 'h', type: 'rest' });
+      } else if (Math.abs(remaining - 1) < 0.01) {
+        fixedNotes.push({ duration: 'q', type: 'rest' });
+      } else if (Math.abs(remaining - 0.5) < 0.01) {
+        fixedNotes.push({ duration: '8', type: 'rest' });
+      } else if (Math.abs(remaining - 0.25) < 0.01) {
+        fixedNotes.push({ duration: '16', type: 'rest' });
+      }
+    }
+    
+    return fixedNotes;
+  }
+
+  /**
+   * Check if a tie is appropriate at this beat position
+   * Rules:
+   * - Ties across barlines: YES (creates syncopation)
+   * - Ties across middle of bar (beat 3 in 4/4): YES if starting on offbeat
+   * - Ties within beats: NO (use longer note instead)
+   * - Ties across strong beats (1, 3): NO unless it's for syncopation
+   */
+  private static shouldAllowTie(currentBeatInBar: number, noteDuration: number, beatsPerBar: number): boolean {
+    // Tie across barline - always allowed for syncopation
+    if (currentBeatInBar + noteDuration > beatsPerBar) {
+      return true;
+    }
+    
+    // For 4/4 time
+    if (beatsPerBar === 4) {
+      // Starting on offbeat (half beats: 0.5, 1.5, 2.5, 3.5)
+      const isOffbeat = currentBeatInBar % 1 !== 0;
+      
+      if (isOffbeat && noteDuration === 0.5) {
+        // Eighth note on offbeat
+        const nextBeat = currentBeatInBar + 0.5;
+        
+        // Tie across middle of bar (beat 3) - allowed for syncopation
+        if (nextBeat === 3.0) {
+          return true;
+        }
+        
+        // Tie across beat 2 from offbeat - allowed
+        if (nextBeat === 2.0) {
+          return true;
+        }
+        
+        // Tie across beat 4 from offbeat - allowed
+        if (nextBeat === 4.0) {
+          return true;
+        }
+      }
+    }
+    
+    return false;
+  }
+
+  /**
    * Bundle consecutive rests into larger rest values
    */
   private static bundleConsecutiveRests(notes: Array<{ duration: NoteDuration; type: NoteType; tie?: boolean }>): Array<{ duration: NoteDuration; type: NoteType; tie?: boolean }> {
@@ -167,7 +277,8 @@ export class ChallengeGenerator {
       }
     }
     
-    return { bars, beatsPerBar, notes: this.bundleConsecutiveRests(notes) };
+    const fixedNotes = this.validateAndFixBars(notes, beatsPerBar);
+    return { bars, beatsPerBar, notes: this.bundleConsecutiveRests(fixedNotes) };
   }
   
   private static generateEighthBasicPattern(bars: number, beatsPerBar: number): RhythmPattern {
@@ -191,7 +302,8 @@ export class ChallengeGenerator {
       }
     }
     
-    return { bars, beatsPerBar, notes: this.bundleConsecutiveRests(notes) };
+    const fixedNotes = this.validateAndFixBars(notes, beatsPerBar);
+    return { bars, beatsPerBar, notes: this.bundleConsecutiveRests(fixedNotes) };
   }
   
   private static generateEighthSyncopationPattern(bars: number, beatsPerBar: number): RhythmPattern {
@@ -208,8 +320,8 @@ export class ChallengeGenerator {
           // Eighth rest (10% chance) - creates syncopation
           notes.push({ duration: '8', type: 'rest' });
           beatsInBar += 0.5;
-        } else if (remainingBeats >= 1 && rand > 0.75) {
-          // Tied eighth notes (15% chance) - creates syncopation
+        } else if (remainingBeats >= 1 && rand > 0.75 && this.shouldAllowTie(beatsInBar, 0.5, beatsPerBar)) {
+          // Tied eighth notes (15% chance) - only where musically appropriate
           notes.push({ duration: '8', type: 'note', tie: true });
           notes.push({ duration: '8', type: 'note' });
           beatsInBar += 1;
@@ -225,7 +337,8 @@ export class ChallengeGenerator {
       }
     }
     
-    return { bars, beatsPerBar, notes: this.bundleConsecutiveRests(notes) };
+    const fixedNotes = this.validateAndFixBars(notes, beatsPerBar);
+    return { bars, beatsPerBar, notes: this.bundleConsecutiveRests(fixedNotes) };
   }
   
   private static generateEighthRestsPattern(bars: number, beatsPerBar: number): RhythmPattern {
@@ -246,8 +359,8 @@ export class ChallengeGenerator {
           // Eighth rest (10% chance)
           notes.push({ duration: '8', type: 'rest' });
           beatsInBar += 0.5;
-        } else if (remainingBeats >= 1 && rand > 0.6) {
-          // Tied eighth notes (15% chance) - syncopation with ties
+        } else if (remainingBeats >= 1 && rand > 0.6 && this.shouldAllowTie(beatsInBar, 0.5, beatsPerBar)) {
+          // Tied eighth notes (15% chance) - only where musically appropriate
           notes.push({ duration: '8', type: 'note', tie: true });
           notes.push({ duration: '8', type: 'note' });
           beatsInBar += 1;
@@ -263,20 +376,29 @@ export class ChallengeGenerator {
       }
     }
     
-    return { bars, beatsPerBar, notes: this.bundleConsecutiveRests(notes) };
+    const fixedNotes = this.validateAndFixBars(notes, beatsPerBar);
+    return { bars, beatsPerBar, notes: this.bundleConsecutiveRests(fixedNotes) };
   }
   
   private static generateEighthCrossBarPattern(bars: number, beatsPerBar: number): RhythmPattern {
     const notes: Array<{ duration: NoteDuration; type: NoteType; tie?: boolean }> = [];
+    let needsCompletionNote = false; // Track if previous bar ended with a tie
     
     for (let bar = 0; bar < bars; bar++) {
       let beatsInBar = 0;
       const isLastBar = bar === bars - 1;
       
+      // If previous bar ended with a tie, add the completion note first
+      if (needsCompletionNote) {
+        notes.push({ duration: '8', type: 'note' });
+        beatsInBar += 0.5;
+        needsCompletionNote = false;
+      }
+      
       while (beatsInBar < beatsPerBar) {
         const remainingBeats = beatsPerBar - beatsInBar;
         const rand = Math.random();
-        const isEndOfBar = remainingBeats <= 0.5;
+        const isLastEighthOfBar = Math.abs(remainingBeats - 0.5) < 0.01;
         
         if (remainingBeats >= 2 && rand > 0.9) {
           // Half rest (10% chance) - longer rest
@@ -290,12 +412,14 @@ export class ChallengeGenerator {
           // Eighth rest (10% chance)
           notes.push({ duration: '8', type: 'rest' });
           beatsInBar += 0.5;
-        } else if (!isLastBar && isEndOfBar && rand > 0.5) {
+        } else if (!isLastBar && isLastEighthOfBar && rand > 0.5) {
           // Tie across barline (20% chance when at end of bar) - THE HARD PART!
+          // This is ALWAYS appropriate - ties across barlines are correct
           notes.push({ duration: '8', type: 'note', tie: true });
           beatsInBar += 0.5;
-        } else if (remainingBeats >= 1 && rand > 0.6) {
-          // Tied eighth notes within bar (10% chance)
+          needsCompletionNote = true; // Next bar needs to start with completion note
+        } else if (remainingBeats >= 1 && rand > 0.6 && this.shouldAllowTie(beatsInBar, 0.5, beatsPerBar)) {
+          // Tied eighth notes within bar (10% chance) - only where appropriate
           notes.push({ duration: '8', type: 'note', tie: true });
           notes.push({ duration: '8', type: 'note' });
           beatsInBar += 1;
@@ -315,7 +439,8 @@ export class ChallengeGenerator {
       }
     }
     
-    return { bars, beatsPerBar, notes: this.bundleConsecutiveRests(notes) };
+    const fixedNotes = this.validateAndFixBars(notes, beatsPerBar);
+    return { bars, beatsPerBar, notes: this.bundleConsecutiveRests(fixedNotes) };
   }
   
   private static generateMediumPattern(bars: number, beatsPerBar: number): RhythmPattern {
@@ -355,7 +480,8 @@ export class ChallengeGenerator {
       }
     }
     
-    return { bars, beatsPerBar, notes: this.bundleConsecutiveRests(notes) };
+    const fixedNotes = this.validateAndFixBars(notes, beatsPerBar);
+    return { bars, beatsPerBar, notes: this.bundleConsecutiveRests(fixedNotes) };
   }
   
   private static generateHardPattern(bars: number, beatsPerBar: number): RhythmPattern {
@@ -408,7 +534,8 @@ export class ChallengeGenerator {
       }
     }
     
-    return { bars, beatsPerBar, notes: this.bundleConsecutiveRests(notes) };
+    const fixedNotes = this.validateAndFixBars(notes, beatsPerBar);
+    return { bars, beatsPerBar, notes: this.bundleConsecutiveRests(fixedNotes) };
   }
   
   private static generateExpertPattern(bars: number, beatsPerBar: number): RhythmPattern {
@@ -473,6 +600,7 @@ export class ChallengeGenerator {
       }
     }
     
-    return { bars, beatsPerBar, notes: this.bundleConsecutiveRests(notes) };
+    const fixedNotes = this.validateAndFixBars(notes, beatsPerBar);
+    return { bars, beatsPerBar, notes: this.bundleConsecutiveRests(fixedNotes) };
   }
 }
