@@ -127,6 +127,19 @@ export class PatternDesigner {
             <input type="checkbox" id="sustained-notes-toggle" ${this.getSustainedNotesEnabled() ? 'checked' : ''}>
             Play sustained notes (actual note durations)
           </label>
+          <label style="margin-left: 1rem;">
+            Note pitch: 
+            <select id="note-pitch-select" style="padding: 0.3rem; margin-left: 0.5rem;">
+              <option value="261.63">C4 (Middle C)</option>
+              <option value="293.66">D4</option>
+              <option value="329.63">E4</option>
+              <option value="349.23">F4</option>
+              <option value="392.00">G4</option>
+              <option value="440.00" selected>A4</option>
+              <option value="493.88">B4</option>
+              <option value="523.25">C5</option>
+            </select>
+          </label>
         </div>
         
         <div class="rhythm-validation" id="rhythm-validation"></div>
@@ -294,6 +307,16 @@ export class PatternDesigner {
       this.setSustainedNotesEnabled(enabled);
       Toast.info(enabled ? 'Sustained notes enabled' : 'Sustained notes disabled');
     });
+
+    // Note pitch selector
+    const pitchSelect = this.container.querySelector('#note-pitch-select') as HTMLSelectElement;
+    if (pitchSelect) {
+      pitchSelect.value = this.getNotePitch().toString();
+      pitchSelect.addEventListener('change', (e) => {
+        const frequency = parseFloat((e.target as HTMLSelectElement).value);
+        this.setNotePitch(frequency);
+      });
+    }
 
     // Clear all button
     this.container.querySelector('#clear-all-btn')?.addEventListener('click', () => {
@@ -538,6 +561,15 @@ export class PatternDesigner {
     localStorage.setItem('sustainedNotesEnabled', enabled ? 'true' : 'false');
   }
 
+  private getNotePitch(): number {
+    const saved = localStorage.getItem('notePitch');
+    return saved ? parseFloat(saved) : 440.0;
+  }
+
+  private setNotePitch(frequency: number) {
+    localStorage.setItem('notePitch', frequency.toString());
+  }
+
   private async playPattern() {
     if (this.isPlaying) return;
     if (this.pattern.notes.length === 0) {
@@ -607,8 +639,9 @@ export class PatternDesigner {
       this.audioEngine.playMetronome(beatTime, isDownbeat);
     }
 
-    // Schedule pattern notes (after count-in, skip tied notes)
+    // Schedule pattern notes (after count-in, handle ties for sustained notes)
     const useSustainedNotes = this.getSustainedNotesEnabled();
+    const notePitch = this.getNotePitch();
     this.pattern.notes.forEach((note, index) => {
       // Check if this note is tied from the previous note
       const previousNote = index > 0 ? this.pattern.notes[index - 1] : null;
@@ -619,13 +652,27 @@ export class PatternDesigner {
         const beatTime = audioStartTime + ((countInDuration + noteTimes[index]) / 1000);
         
         if (useSustainedNotes) {
-          // Calculate actual note duration
-          let noteBeats = beatValues[note.duration];
+          // Calculate total duration including tied notes
+          let totalNoteBeats = beatValues[note.duration];
           if (note.dotted) {
-            noteBeats *= 1.5;
+            totalNoteBeats *= 1.5;
           }
-          const noteDurationSeconds = (noteBeats * beatDuration) / 1000;
-          this.audioEngine.playSustainedNote(beatTime, noteDurationSeconds);
+          
+          // Add duration of all subsequent tied notes
+          let currentIndex = index;
+          while (currentIndex < this.pattern.notes.length && this.pattern.notes[currentIndex].tie) {
+            currentIndex++;
+            if (currentIndex < this.pattern.notes.length) {
+              let tiedNoteBeats = beatValues[this.pattern.notes[currentIndex].duration];
+              if (this.pattern.notes[currentIndex].dotted) {
+                tiedNoteBeats *= 1.5;
+              }
+              totalNoteBeats += tiedNoteBeats;
+            }
+          }
+          
+          const noteDurationSeconds = (totalNoteBeats * beatDuration) / 1000;
+          this.audioEngine.playSustainedNote(beatTime, noteDurationSeconds, notePitch);
         } else {
           this.audioEngine.playPattern(beatTime);
         }

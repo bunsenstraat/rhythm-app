@@ -31,6 +31,11 @@ export class RhythmPlayer {
     localStorage.setItem('sustainedNotesEnabled', enabled ? 'true' : 'false');
   }
 
+  private getNotePitch(): number {
+    const saved = localStorage.getItem('notePitch');
+    return saved ? parseFloat(saved) : 440.0;
+  }
+
   constructor(
     container: HTMLElement,
     pattern: RhythmPattern,
@@ -307,6 +312,7 @@ export class RhythmPlayer {
     // Schedule pattern sounds (only in practice mode and only on actual notes, not rests or tied notes)
     if (this.practiceMode) {
       const useSustainedNotes = this.getSustainedNotesEnabled();
+      const notePitch = this.getNotePitch();
       this.pattern.notes.forEach((note, index) => {
         // Check if this note is tied from the previous note
         const previousNote = index > 0 ? this.pattern.notes[index - 1] : null;
@@ -318,13 +324,27 @@ export class RhythmPlayer {
           const beatTime = audioContextStartTime + ((countInDuration + noteTime) / 1000);
           
           if (useSustainedNotes) {
-            // Calculate actual note duration
-            let noteBeats = beatValues[note.duration];
+            // Calculate total duration including tied notes
+            let totalNoteBeats = beatValues[note.duration];
             if (note.dotted) {
-              noteBeats *= 1.5;
+              totalNoteBeats *= 1.5;
             }
-            const noteDurationSeconds = (noteBeats * beatDuration) / 1000;
-            this.audioEngine.playSustainedNote(beatTime, noteDurationSeconds);
+            
+            // Add duration of all subsequent tied notes
+            let currentIndex = index;
+            while (currentIndex < this.pattern.notes.length && this.pattern.notes[currentIndex].tie) {
+              currentIndex++;
+              if (currentIndex < this.pattern.notes.length) {
+                let tiedNoteBeats = beatValues[this.pattern.notes[currentIndex].duration];
+                if (this.pattern.notes[currentIndex].dotted) {
+                  tiedNoteBeats *= 1.5;
+                }
+                totalNoteBeats += tiedNoteBeats;
+              }
+            }
+            
+            const noteDurationSeconds = (totalNoteBeats * beatDuration) / 1000;
+            this.audioEngine.playSustainedNote(beatTime, noteDurationSeconds, notePitch);
           } else {
             this.audioEngine.playPattern(beatTime);
           }

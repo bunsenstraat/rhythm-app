@@ -86,7 +86,7 @@ export class AudioEngine {
     source.start(startTime);
   }
 
-  playSustainedNote(time: number, durationInSeconds: number) {
+  playSustainedNote(time: number, durationInSeconds: number, frequency: number = 440) {
     // Play a sustained tone for the exact duration of the note
     const oscillator = this.audioContext.createOscillator();
     const gainNode = this.audioContext.createGain();
@@ -94,8 +94,8 @@ export class AudioEngine {
     oscillator.connect(gainNode);
     gainNode.connect(this.audioContext.destination);
     
-    // Use a pleasant frequency (middle C = 261.63 Hz)
-    oscillator.frequency.value = 440; // A4 note
+    // Use the specified frequency
+    oscillator.frequency.value = frequency;
     oscillator.type = 'sine';
     
     // Set volume with attack and release envelope
