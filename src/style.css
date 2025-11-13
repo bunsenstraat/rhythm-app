@@ -411,6 +411,14 @@ body {
   cursor: not-allowed;
 }
 
+.action-btn.stop-btn {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+}
+
+.action-btn.stop-btn:hover {
+  background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+}
+
 /* Rhythm Validation Panel */
 .rhythm-validation {
   margin: 2rem 0;

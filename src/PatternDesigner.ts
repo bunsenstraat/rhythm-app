@@ -118,6 +118,7 @@ export class PatternDesigner {
         <div class="editor-controls">
           <button id="add-note-btn" class="action-btn">Add Note</button>
           <button id="play-pattern-btn" class="action-btn play-btn">▶️ Play Pattern</button>
+          <button id="stop-pattern-btn" class="action-btn stop-btn" style="display: none;">⏹️ Stop</button>
           <button id="clear-all-btn" class="action-btn">Clear All</button>
         </div>
         
@@ -274,6 +275,10 @@ export class PatternDesigner {
     // Play pattern button
     this.container.querySelector('#play-pattern-btn')?.addEventListener('click', () => {
       this.playPattern();
+    });
+
+    this.container.querySelector('#stop-pattern-btn')?.addEventListener('click', () => {
+      this.stopPattern();
     });
 
     // Clear all button
@@ -509,6 +514,8 @@ export class PatternDesigner {
     this.updateDisplay();
   }
 
+  private playbackTimeout: number | null = null;
+
   private async playPattern() {
     if (this.isPlaying) return;
     if (this.pattern.notes.length === 0) {
@@ -518,9 +525,12 @@ export class PatternDesigner {
 
     this.isPlaying = true;
     const playBtn = this.container.querySelector('#play-pattern-btn') as HTMLButtonElement;
+    const stopBtn = this.container.querySelector('#stop-pattern-btn') as HTMLButtonElement;
     if (playBtn) {
-      playBtn.textContent = '⏸️ Playing...';
-      playBtn.disabled = true;
+      playBtn.style.display = 'none';
+    }
+    if (stopBtn) {
+      stopBtn.style.display = 'inline-block';
     }
 
     await this.audioEngine.resume();
@@ -589,13 +599,44 @@ export class PatternDesigner {
     });
 
     // Reset button after playback (including count-in)
-    setTimeout(() => {
+    this.playbackTimeout = window.setTimeout(() => {
       this.isPlaying = false;
+      const playBtn = this.container.querySelector('#play-pattern-btn') as HTMLButtonElement;
+      const stopBtn = this.container.querySelector('#stop-pattern-btn') as HTMLButtonElement;
       if (playBtn) {
-        playBtn.textContent = '▶️ Play Pattern';
-        playBtn.disabled = false;
+        playBtn.style.display = 'inline-block';
       }
+      if (stopBtn) {
+        stopBtn.style.display = 'none';
+      }
+      this.playbackTimeout = null;
     }, countInDuration + totalDuration + (startDelay * 1000) + 500);
+  }
+
+  private async stopPattern() {
+    if (!this.isPlaying) return;
+    
+    // Stop audio
+    await this.audioEngine.stop();
+    
+    // Clear timeout
+    if (this.playbackTimeout !== null) {
+      clearTimeout(this.playbackTimeout);
+      this.playbackTimeout = null;
+    }
+    
+    // Reset UI
+    this.isPlaying = false;
+    const playBtn = this.container.querySelector('#play-pattern-btn') as HTMLButtonElement;
+    const stopBtn = this.container.querySelector('#stop-pattern-btn') as HTMLButtonElement;
+    if (playBtn) {
+      playBtn.style.display = 'inline-block';
+    }
+    if (stopBtn) {
+      stopBtn.style.display = 'none';
+    }
+    
+    Toast.info('Playback stopped');
   }
 
   private applyPreset(preset: string) {
