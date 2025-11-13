@@ -69,10 +69,31 @@ def musicxml_to_abc(musicxml_path: str, output_path: str = None) -> str:
         
         for measure in measures:
             # Get all notes and rests in this measure
-            for element in measure.flatten().notesAndRests:
+            elements = list(measure.flatten().notesAndRests)
+            i = 0
+            
+            while i < len(elements):
+                element = elements[i]
+                
+                # Check if this starts a triplet (3 notes with same duration in time of 2)
+                if i + 2 < len(elements) and is_triplet_group(elements[i:i+3]):
+                    # Convert triplet group
+                    triplet_notes = []
+                    for triplet_elem in elements[i:i+3]:
+                        abc_note = convert_note_to_abc(triplet_elem, in_triplet=True)
+                        if abc_note:
+                            triplet_notes.append(abc_note)
+                    
+                    if len(triplet_notes) == 3:
+                        notes_line.append(f"(3{''.join(triplet_notes)}")
+                        i += 3
+                        continue
+                
+                # Regular note/rest
                 abc_note = convert_note_to_abc(element)
                 if abc_note:
                     notes_line.append(abc_note)
+                i += 1
             
             # Add bar line
             notes_line.append('|')
@@ -96,31 +117,88 @@ def musicxml_to_abc(musicxml_path: str, output_path: str = None) -> str:
         raise
 
 
-def convert_note_to_abc(element) -> str:
+def is_triplet_group(elements) -> bool:
+    """
+    Check if a group of 3 elements forms a triplet.
+    Triplets in MusicXML are marked with tuplet information.
+    
+    Args:
+        elements: List of 3 music21 note/rest elements
+    
+    Returns:
+        True if this is a triplet group
+    """
+    if len(elements) != 3:
+        return False
+    
+    # Check if all three elements have the same quarterLength
+    first_duration = elements[0].quarterLength
+    if not all(elem.quarterLength == first_duration for elem in elements):
+        return False
+    
+    # Check for tuplet marking in music21
+    # Common triplet patterns:
+    # - 3 quarter notes in time of 2 quarters (each is 2/3 of a quarter)
+    # - 3 eighth notes in time of 2 eighths (each is 1/3 of a quarter)
+    
+    # Quarter triplets: each note is 2/3 quarter
+    if abs(first_duration - 2/3) < 0.01:
+        return all(isinstance(elem, (note.Note, note.Rest)) for elem in elements)
+    
+    # Eighth triplets: each note is 1/3 quarter  
+    if abs(first_duration - 1/3) < 0.01:
+        return all(isinstance(elem, (note.Note, note.Rest)) for elem in elements)
+    
+    # Check if elements have tuplet information
+    for elem in elements:
+        if hasattr(elem, 'duration') and hasattr(elem.duration, 'tuplets'):
+            if elem.duration.tuplets:
+                return True
+    
+    return False
+
+
+def convert_note_to_abc(element, in_triplet: bool = False) -> str:
     """
     Convert a music21 note or rest to ABC notation.
     
     Args:
         element: A music21 note.Note, note.Rest, or chord.Chord
+        in_triplet: Whether this note is part of a triplet (affects duration notation)
     
     Returns:
         ABC notation string for this note
     """
     # Handle rests
     if isinstance(element, note.Rest):
-        duration = get_abc_duration(element.quarterLength)
-        return f"z{duration}"
+        if in_triplet:
+            # In triplets, we don't add duration modifiers (handled by (3 prefix)
+            return "z"
+        else:
+            duration = get_abc_duration(element.quarterLength)
+            return f"z{duration}"
     
     # Handle notes (we only care about rhythm, so use 'C' for all notes)
     if isinstance(element, note.Note):
-        duration = get_abc_duration(element.quarterLength)
-        
-        # Check for ties
-        tie_str = ""
-        if element.tie and element.tie.type == 'start':
-            tie_str = "-"
-        
-        return f"C{duration}{tie_str}"
+        if in_triplet:
+            # In triplets, we don't add duration modifiers
+            tie_str = ""
+            # Add tie if this note starts a tie (or continues one that will continue forward)
+            if element.tie:
+                if element.tie.type in ('start', 'continue'):
+                    tie_str = "-"
+            return f"C{tie_str}"
+        else:
+            duration = get_abc_duration(element.quarterLength)
+            
+            # Check for ties
+            # Add tie marker if this note ties to the next note
+            tie_str = ""
+            if element.tie:
+                if element.tie.type in ('start', 'continue'):
+                    tie_str = "-"
+            
+            return f"C{duration}{tie_str}"
     
     return ""
 
