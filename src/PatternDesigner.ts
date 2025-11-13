@@ -52,74 +52,82 @@ export class PatternDesigner {
         
         <div class="sheet-music-container" id="sheet-music"></div>
         
-        <div class="selection-controls" id="selection-controls" style="display: none;">
-          <div style="margin-bottom: 1rem;">
-            <strong>Selected: <span id="selected-count">0</span> note(s)</strong>
-            <button class="clear-selection-btn" id="clear-selection-btn">Clear Selection</button>
-          </div>
-          <div class="selection-actions">
-            <div class="action-group">
-              <label>Change Duration:</label>
-              <button class="sel-action-btn" data-action="duration" data-value="q" title="Quarter Note">Q</button>
-              <button class="sel-action-btn" data-action="duration" data-value="8" title="Eighth Note">8th</button>
-              <button class="sel-action-btn" data-action="duration" data-value="16" title="Sixteenth Note">16th</button>
-              <button class="sel-action-btn" data-action="duration" data-value="h" title="Half Note">H</button>
-              <button class="sel-action-btn" data-action="duration" data-value="w" title="Whole Note">W</button>
-              <button class="sel-action-btn" data-action="duration" data-value="q3" title="Quarter Triplet">Q3</button>
-              <button class="sel-action-btn" data-action="duration" data-value="83" title="Eighth Triplet">8th3</button>
-            </div>
-            <div class="action-group">
-              <label>Change Type:</label>
-              <button class="sel-action-btn" data-action="type" data-value="note">Note</button>
-              <button class="sel-action-btn" data-action="type" data-value="rest">Rest</button>
-            </div>
-            <div class="action-group">
-              <label>Tie:</label>
-              <button class="sel-action-btn" data-action="tie" data-value="add" title="Add tie to next note">Add Tie</button>
-              <button class="sel-action-btn" data-action="tie" data-value="remove" title="Remove tie">Remove Tie</button>
-            </div>
-            <div class="action-group">
-              <label>Dot:</label>
-              <button class="sel-action-btn" data-action="dot" data-value="add" title="Add dot (1.5x duration)">Add Dot</button>
-              <button class="sel-action-btn" data-action="dot" data-value="remove" title="Remove dot">Remove Dot</button>
-            </div>
-            <div class="action-group">
-              <button class="sel-action-btn danger" data-action="delete">Delete Selected</button>
-            </div>
-          </div>
+        <div class="editor-controls">
+          <button id="toggle-editor-btn" class="action-btn" style="background: #667eea;">
+            ✏️ Toggle Note Editor
+          </button>
+          <button id="play-pattern-btn" class="action-btn play-btn">▶️ Play Pattern</button>
+          <button id="stop-pattern-btn" class="action-btn stop-btn" style="display: none;">⏹️ Stop</button>
         </div>
         
-        <div class="rhythm-editor">
-          <div class="note-palette">
-            <h3>Note Duration</h3>
-            <div class="duration-buttons">
-              <button class="duration-btn active" data-duration="q" title="Quarter Note">Q</button>
-              <button class="duration-btn" data-duration="8" title="Eighth Note">8th</button>
-              <button class="duration-btn" data-duration="16" title="Sixteenth Note">16th</button>
-              <button class="duration-btn" data-duration="h" title="Half Note">H</button>
-              <button class="duration-btn" data-duration="q3" title="Quarter Triplet">Q3</button>
-              <button class="duration-btn" data-duration="83" title="Eighth Triplet">8th3</button>
+        <div id="note-editor-section" style="display: none;">
+          <div class="selection-controls" id="selection-controls" style="display: none;">
+            <div style="margin-bottom: 1rem;">
+              <strong>Selected: <span id="selected-count">0</span> note(s)</strong>
+              <button class="clear-selection-btn" id="clear-selection-btn">Clear Selection</button>
+            </div>
+            <div class="selection-actions">
+              <div class="action-group">
+                <label>Change Duration:</label>
+                <button class="sel-action-btn" data-action="duration" data-value="q" title="Quarter Note">Q</button>
+                <button class="sel-action-btn" data-action="duration" data-value="8" title="Eighth Note">8th</button>
+                <button class="sel-action-btn" data-action="duration" data-value="16" title="Sixteenth Note">16th</button>
+                <button class="sel-action-btn" data-action="duration" data-value="h" title="Half Note">H</button>
+                <button class="sel-action-btn" data-action="duration" data-value="w" title="Whole Note">W</button>
+                <button class="sel-action-btn" data-action="duration" data-value="q3" title="Quarter Triplet">Q3</button>
+                <button class="sel-action-btn" data-action="duration" data-value="83" title="Eighth Triplet">8th3</button>
+              </div>
+              <div class="action-group">
+                <label>Change Type:</label>
+                <button class="sel-action-btn" data-action="type" data-value="note">Note</button>
+                <button class="sel-action-btn" data-action="type" data-value="rest">Rest</button>
+              </div>
+              <div class="action-group">
+                <label>Tie:</label>
+                <button class="sel-action-btn" data-action="tie" data-value="add" title="Add tie to next note">Add Tie</button>
+                <button class="sel-action-btn" data-action="tie" data-value="remove" title="Remove tie">Remove Tie</button>
+              </div>
+              <div class="action-group">
+                <label>Dot:</label>
+                <button class="sel-action-btn" data-action="dot" data-value="add" title="Add dot (1.5x duration)">Add Dot</button>
+                <button class="sel-action-btn" data-action="dot" data-value="remove" title="Remove dot">Remove Dot</button>
+              </div>
+              <div class="action-group">
+                <button class="sel-action-btn danger" data-action="delete">Delete Selected</button>
+              </div>
             </div>
           </div>
           
-          <div class="note-type-palette">
-            <h3>Note Type</h3>
-            <div class="type-buttons">
-              <button class="type-btn active" data-type="note">Note</button>
-              <button class="type-btn" data-type="rest">Rest</button>
+          <div class="rhythm-editor">
+            <div class="note-palette">
+              <h3>Note Duration</h3>
+              <div class="duration-buttons">
+                <button class="duration-btn active" data-duration="q" title="Quarter Note">Q</button>
+                <button class="duration-btn" data-duration="8" title="Eighth Note">8th</button>
+                <button class="duration-btn" data-duration="16" title="Sixteenth Note">16th</button>
+                <button class="duration-btn" data-duration="h" title="Half Note">H</button>
+                <button class="duration-btn" data-duration="q3" title="Quarter Triplet">Q3</button>
+                <button class="duration-btn" data-duration="83" title="Eighth Triplet">8th3</button>
+              </div>
+            </div>
+            
+            <div class="note-type-palette">
+              <h3>Note Type</h3>
+              <div class="type-buttons">
+                <button class="type-btn active" data-type="note">Note</button>
+                <button class="type-btn" data-type="rest">Rest</button>
+              </div>
             </div>
           </div>
-        </div>
-        
-        <div class="notes-list" id="notes-list">
-          ${this.renderNotesList()}
-        </div>
-        
-        <div class="editor-controls">
-          <button id="add-note-btn" class="action-btn">Add Note</button>
-          <button id="play-pattern-btn" class="action-btn play-btn">▶️ Play Pattern</button>
-          <button id="stop-pattern-btn" class="action-btn stop-btn" style="display: none;">⏹️ Stop</button>
-          <button id="clear-all-btn" class="action-btn">Clear All</button>
+          
+          <div class="notes-list" id="notes-list">
+            ${this.renderNotesList()}
+          </div>
+          
+          <div class="editor-action-controls">
+            <button id="add-note-btn" class="action-btn">Add Note</button>
+            <button id="clear-all-btn" class="action-btn">Clear All</button>
+          </div>
         </div>
         
         <div class="playback-options">
@@ -290,6 +298,19 @@ export class PatternDesigner {
     // Add note button
     this.container.querySelector('#add-note-btn')?.addEventListener('click', () => {
       this.addNote();
+    });
+
+    // Toggle editor section
+    this.container.querySelector('#toggle-editor-btn')?.addEventListener('click', () => {
+      const editorSection = this.container.querySelector('#note-editor-section') as HTMLElement;
+      if (editorSection) {
+        const isHidden = editorSection.style.display === 'none';
+        editorSection.style.display = isHidden ? 'block' : 'none';
+        const toggleBtn = this.container.querySelector('#toggle-editor-btn') as HTMLElement;
+        if (toggleBtn) {
+          toggleBtn.textContent = isHidden ? '✏️ Hide Note Editor' : '✏️ Show Note Editor';
+        }
+      }
     });
 
     // Play pattern button

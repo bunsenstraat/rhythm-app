@@ -391,6 +391,20 @@ body {
   margin-bottom: 1rem;
 }
 
+.editor-action-controls {
+  display: flex;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+#note-editor-section {
+  margin-top: 1rem;
+  padding: 1rem;
+  background: rgba(22, 33, 62, 0.3);
+  border-radius: 8px;
+  border: 1px solid rgba(102, 126, 234, 0.2);
+}
+
 .playback-options {
   margin-bottom: 1.5rem;
   text-align: center;
