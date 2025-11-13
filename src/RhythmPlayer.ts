@@ -114,6 +114,9 @@ export class RhythmPlayer {
             <button id="tap-button" class="tap-button" ${!this.isPlaying ? 'disabled' : ''}>
               TAP
             </button>
+            <button id="restart-playback-btn" class="restart-playback-btn" style="${!this.isPlaying ? 'display: none;' : ''}">
+              🔄
+            </button>
             <button id="stop-playback-btn" class="stop-playback-btn" style="${!this.isPlaying ? 'display: none;' : ''}">
               ⏹️
             </button>
@@ -144,6 +147,10 @@ export class RhythmPlayer {
     // Stop playback button
     const stopBtn = this.container.querySelector('#stop-playback-btn');
     stopBtn?.addEventListener('click', () => this.stopPlayback());
+
+    // Restart playback button
+    const restartBtn = this.container.querySelector('#restart-playback-btn');
+    restartBtn?.addEventListener('click', () => this.restartPlayback());
 
     const tapButton = this.container.querySelector('#tap-button') as HTMLButtonElement;
     tapButton.addEventListener('click', () => this.handleTap());
@@ -219,12 +226,14 @@ export class RhythmPlayer {
     // Hide start button and enable tap button, show stop button
     const startBtn = this.container.querySelector('#start-playback-btn') as HTMLElement;
     const stopBtn = this.container.querySelector('#stop-playback-btn') as HTMLElement;
+    const restartBtn = this.container.querySelector('#restart-playback-btn') as HTMLElement;
     const tapBtn = this.container.querySelector('#tap-button') as HTMLButtonElement;
     const practiceModeBtn = this.container.querySelector('#practice-mode-btn') as HTMLButtonElement;
     const testModeBtn = this.container.querySelector('#test-mode-btn') as HTMLButtonElement;
     
     if (startBtn) startBtn.style.display = 'none';
     if (stopBtn) stopBtn.style.display = 'flex';
+    if (restartBtn) restartBtn.style.display = 'flex';
     if (tapBtn) tapBtn.disabled = false;
     if (practiceModeBtn) practiceModeBtn.disabled = true;
     if (testModeBtn) testModeBtn.disabled = true;
@@ -431,6 +440,40 @@ export class RhythmPlayer {
     // User manually stopped - show partial results
     Toast.info('Practice stopped');
     this.stop();
+  }
+
+  private async restartPlayback() {
+    // Stop current playback
+    await this.audioEngine.stop();
+    
+    // Clear animation frame
+    if (this.animationFrameId !== null) {
+      cancelAnimationFrame(this.animationFrameId);
+      this.animationFrameId = null;
+    }
+    
+    // Reset state but stay in playing mode
+    this.taps = [];
+    this.currentNoteIndex = 0;
+    this.lastDisplayedTitle = '';
+    this.lastDisplayedNote = -1;
+    
+    // Update tap counter display
+    const tapCount = this.container.querySelector('#tap-count');
+    if (tapCount) {
+      tapCount.textContent = '0';
+    }
+    
+    // Reset progress bar
+    const progressFill = document.getElementById('progress-fill');
+    if (progressFill) {
+      (progressFill as HTMLElement).style.transform = 'scaleX(0)';
+    }
+    
+    Toast.info('Restarting...');
+    
+    // Start playback again
+    this.startPlayback();
   }
 
   private stop() {
