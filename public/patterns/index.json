@@ -16,6 +16,11 @@
       "name": "Pattern9"
     },
     {
+      "filename": "ritme5bovenste.abc",
+      "category": "intermediate",
+      "name": "ritme5bovenste"
+    },
+    {
       "filename": "test-simple.abc",
       "category": "intermediate",
       "name": "Simple Quarter Notes"
