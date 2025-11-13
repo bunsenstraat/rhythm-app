@@ -121,4 +121,12 @@ export class AudioEngine {
       await this.audioContext.resume();
     }
   }
+
+  async stop() {
+    // Close the audio context to stop all scheduled sounds
+    await this.audioContext.close();
+    // Create a new context for future playback
+    this.audioContext = new AudioContext();
+    await this.createSounds();
+  }
 }

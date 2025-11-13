@@ -94,52 +94,56 @@ export class RhythmPlayer {
   private render() {
     const totalNotes = this.pattern.notes.filter(n => n.type === 'note').length;
     const modeText = this.practiceMode ? '🎵 Practice Mode' : '🎯 Test Mode';
-    const modeDesc = this.practiceMode ? 'You will hear the pattern' : 'Only metronome, no pattern sound';
     
     this.container.innerHTML = `
       <div class="rhythm-player">
-        <h2 id="player-title">Ready to Play</h2>
+        <div class="player-header" id="player-header">
+          <h2 id="player-title">Ready to Play</h2>
+          <div class="mode-toggle">
+            <button id="practice-mode-btn" class="mode-btn ${this.practiceMode ? 'active' : ''}" ${this.isPlaying ? 'disabled' : ''}>
+              🎵 Practice
+            </button>
+            <button id="test-mode-btn" class="mode-btn ${!this.practiceMode ? 'active' : ''}" ${this.isPlaying ? 'disabled' : ''}>
+              🎯 Test
+            </button>
+          </div>
+        </div>
         
-        <div class="mode-toggle">
-          <button id="practice-mode-btn" class="mode-btn ${this.practiceMode ? 'active' : ''}" ${this.isPlaying ? 'disabled' : ''}>
-            🎵 Practice Mode
-          </button>
-          <button id="test-mode-btn" class="mode-btn ${!this.practiceMode ? 'active' : ''}" ${this.isPlaying ? 'disabled' : ''}>
-            🎯 Test Mode
+        <div class="player-controls">
+          <div class="tap-button-container">
+            <button id="tap-button" class="tap-button" ${!this.isPlaying ? 'disabled' : ''}>
+              TAP
+            </button>
+            <button id="stop-playback-btn" class="stop-playback-btn" style="${!this.isPlaying ? 'display: none;' : ''}">
+              ⏹️
+            </button>
+          </div>
+          
+          <button id="start-playback-btn" class="start-playback-btn" style="${this.isPlaying ? 'display: none;' : ''}">
+            🚀 Start ${modeText}
           </button>
         </div>
         
-        <p style="color: #888; margin: 0.5rem 0;">${modeDesc}</p>
+        <div class="player-info" id="player-info">
+          <span class="tap-counter">Taps: <span id="tap-count">0</span>/${totalNotes}</span>
+          <span class="current-note">Note: <span id="note-number">0</span>/${this.pattern.notes.length}</span>
+        </div>
         
-        <button id="start-playback-btn" class="start-playback-btn" style="${this.isPlaying ? 'display: none;' : ''}">
-          🚀 Start ${modeText}
-        </button>
-        
-        <div class="sheet-music-container" id="sheet-music-player"></div>
-        
-        <div class="progress-bar">
+        <div class="progress-bar" id="progress-bar-container">
           <div class="progress-fill" id="progress-fill"></div>
         </div>
         
-        <div class="current-note" id="current-note">
-          Note: <span id="note-number">0</span> / ${this.pattern.notes.length}
-        </div>
-        
-        <div class="tap-button-container">
-          <button id="tap-button" class="tap-button" ${!this.isPlaying ? 'disabled' : ''}>
-            TAP
-          </button>
-        </div>
-        
-        <div class="tap-counter">
-          Taps: <span id="tap-count">0</span> / ${totalNotes}
-        </div>
+        <div class="sheet-music-container" id="sheet-music-player"></div>
       </div>
     `;
 
     // Start playback button
     const startBtn = this.container.querySelector('#start-playback-btn');
     startBtn?.addEventListener('click', () => this.beginPlayback());
+
+    // Stop playback button
+    const stopBtn = this.container.querySelector('#stop-playback-btn');
+    stopBtn?.addEventListener('click', () => this.stopPlayback());
 
     const tapButton = this.container.querySelector('#tap-button') as HTMLButtonElement;
     tapButton.addEventListener('click', () => this.handleTap());
@@ -199,13 +203,28 @@ export class RhythmPlayer {
     document.body.style.width = '100%';
     document.body.style.touchAction = 'none';
     
-    // Hide start button and enable tap button
+    // Hide UI elements for focus mode (keep sheet music visible)
+    const appHeader = document.querySelector('.app-header') as HTMLElement;
+    const appNav = document.querySelector('.app-nav') as HTMLElement;
+    const playerHeader = document.getElementById('player-header') as HTMLElement;
+    const playerInfo = document.getElementById('player-info') as HTMLElement;
+    const progressBar = document.getElementById('progress-bar-container') as HTMLElement;
+    
+    if (appHeader) appHeader.classList.add('hidden');
+    if (appNav) appNav.classList.add('hidden');
+    if (playerHeader) playerHeader.classList.add('hidden');
+    if (playerInfo) playerInfo.classList.add('hidden');
+    if (progressBar) progressBar.classList.add('hidden');
+    
+    // Hide start button and enable tap button, show stop button
     const startBtn = this.container.querySelector('#start-playback-btn') as HTMLElement;
+    const stopBtn = this.container.querySelector('#stop-playback-btn') as HTMLElement;
     const tapBtn = this.container.querySelector('#tap-button') as HTMLButtonElement;
     const practiceModeBtn = this.container.querySelector('#practice-mode-btn') as HTMLButtonElement;
     const testModeBtn = this.container.querySelector('#test-mode-btn') as HTMLButtonElement;
     
     if (startBtn) startBtn.style.display = 'none';
+    if (stopBtn) stopBtn.style.display = 'flex';
     if (tapBtn) tapBtn.disabled = false;
     if (practiceModeBtn) practiceModeBtn.disabled = true;
     if (testModeBtn) testModeBtn.disabled = true;
@@ -406,6 +425,14 @@ export class RhythmPlayer {
     }
   }
 
+  private async stopPlayback() {
+    // Stop all scheduled audio
+    await this.audioEngine.stop();
+    // User manually stopped - show partial results
+    Toast.info('Practice stopped');
+    this.stop();
+  }
+
   private stop() {
     this.isPlaying = false;
     
@@ -417,6 +444,19 @@ export class RhythmPlayer {
     // Reset cached values
     this.lastDisplayedTitle = '';
     this.lastDisplayedNote = -1;
+    
+    // Restore UI elements
+    const appHeader = document.querySelector('.app-header') as HTMLElement;
+    const appNav = document.querySelector('.app-nav') as HTMLElement;
+    const playerHeader = document.getElementById('player-header') as HTMLElement;
+    const playerInfo = document.getElementById('player-info') as HTMLElement;
+    const progressBar = document.getElementById('progress-bar-container') as HTMLElement;
+    
+    if (appHeader) appHeader.classList.remove('hidden');
+    if (appNav) appNav.classList.remove('hidden');
+    if (playerHeader) playerHeader.classList.remove('hidden');
+    if (playerInfo) playerInfo.classList.remove('hidden');
+    if (progressBar) progressBar.classList.remove('hidden');
     
     // Restore scrolling on mobile
     document.body.style.overflow = '';
