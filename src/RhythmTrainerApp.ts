@@ -536,11 +536,9 @@ export class RhythmTrainerApp {
       
       // Extract notes from the parsed structure
       if (tune.lines) {
-        console.log('[ABC Parser] Total lines:', tune.lines.length);
         for (const line of tune.lines) {
           if (line.staff && line.staff[0] && line.staff[0].voices) {
             for (const voice of line.staff[0].voices) {
-              console.log('[ABC Parser] Voice has', voice.length, 'elements');
               for (const element of voice) {
                 // Skip bar lines and other non-note elements
                 if (element.el_type === 'bar') continue;
@@ -552,21 +550,6 @@ export class RhythmTrainerApp {
                   
                   // Get duration - abcjs uses duration as a fraction of a whole note
                   const abcDuration = element.duration || 0.25;
-                  
-                  // Debug: log ALL element properties
-                  console.log('[ABC Parser] Note element:', {
-                    el_type: element.el_type,
-                    duration: abcDuration,
-                    rest: isRest,
-                    startTriplet: element.startTriplet,
-                    triplet: element.triplet,
-                    endTriplet: element.endTriplet,
-                    tripletMultiplier: element.tripletMultiplier,
-                    tripletR: element.tripletR,
-                    startTripletType: typeof element.startTriplet,
-                    allKeys: Object.keys(element)
-                  });
-                  
                   let duration: NoteDuration = 'q';
                   let dotted = false;
                   
@@ -574,23 +557,14 @@ export class RhythmTrainerApp {
                   // abcjs marks triplets with startTriplet (number), triplet, or endTriplet properties
                   const isTriplet = (element.startTriplet && typeof element.startTriplet === 'number') || element.triplet || element.endTriplet;
                   
-                  console.log('[ABC Parser] isTriplet check:', {
-                    isTriplet,
-                    startTripletCheck: element.startTriplet && typeof element.startTriplet === 'number',
-                    tripletCheck: !!element.triplet,
-                    endTripletCheck: !!element.endTriplet
-                  });
-                  
                   if (isTriplet) {
                     // Determine triplet type based on the base duration
                     // Quarter triplets: duration around 0.1667 (2/3 of 0.25)
                     // Eighth triplets: duration around 0.0833 (1/3 of 0.25)
                     if (abcDuration >= 0.15) {
                       duration = 'q3'; // Quarter triplet
-                      console.log('[ABC Parser] ✓ Detected QUARTER TRIPLET');
                     } else {
                       duration = '83'; // Eighth triplet
-                      console.log('[ABC Parser] ✓ Detected EIGHTH TRIPLET');
                     }
                   } else {
                     // Regular note duration conversion
@@ -623,15 +597,12 @@ export class RhythmTrainerApp {
                   // Check for ties
                   const hasTie = element.startTie || element.tie || (element.pitches && element.pitches[0] && element.pitches[0].startTie);
                   
-                  const parsedNote = {
+                  notes.push({
                     duration,
                     type: (isRest ? 'rest' : 'note') as NoteType,
                     dotted,
                     tie: hasTie || false
-                  };
-                  
-                  console.log('[ABC Parser] → Parsed note:', parsedNote);
-                  notes.push(parsedNote);
+                  });
                 }
               }
             }

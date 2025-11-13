@@ -372,13 +372,6 @@ export class SheetMusicRenderer {
     let barCount = 0; // Track number of completed bars
     let i = 0;
     
-    // Debug: Log all note durations to see what we have
-    console.log('[SheetMusic] Pattern notes overview:', this.pattern.notes.map((n, idx) => ({
-      idx,
-      duration: n.duration,
-      type: n.type
-    })));
-    
     // Convert each note to ABC notation with proper beaming
     while (i < this.pattern.notes.length) {
       const note = this.pattern.notes[i];
@@ -389,12 +382,6 @@ export class SheetMusicRenderer {
           this.pattern.notes[i + 1].duration === note.duration &&
           this.pattern.notes[i + 2].duration === note.duration) {
         
-        console.log(`[SheetMusic] Found triplet group at index ${i}:`, {
-          note0: { duration: this.pattern.notes[i].duration, type: this.pattern.notes[i].type },
-          note1: { duration: this.pattern.notes[i + 1].duration, type: this.pattern.notes[i + 1].type },
-          note2: { duration: this.pattern.notes[i + 2].duration, type: this.pattern.notes[i + 2].type }
-        });
-        
         // It's a triplet group - process 3 notes together
         const tripletNotes = [
           this.getNoteString(this.pattern.notes[i]),
@@ -402,7 +389,6 @@ export class SheetMusicRenderer {
           this.getNoteString(this.pattern.notes[i + 2])
         ].join('');
         
-        console.log(`[SheetMusic] Triplet ABC output: (3${tripletNotes}`);
         abcNotes += `(3${tripletNotes}`;
         
         // Add up triplet beats (3 triplets = 2 beats for quarter triplets, 1 beat for eighth triplets)
