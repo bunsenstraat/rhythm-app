@@ -23,6 +23,14 @@ export class RhythmPlayer {
   private lastDisplayedTitle: string = '';
   private lastDisplayedNote: number = -1;
 
+  private getSustainedNotesEnabled(): boolean {
+    return localStorage.getItem('sustainedNotesEnabled') === 'true';
+  }
+
+  private setSustainedNotesEnabled(enabled: boolean) {
+    localStorage.setItem('sustainedNotesEnabled', enabled ? 'true' : 'false');
+  }
+
   constructor(
     container: HTMLElement,
     pattern: RhythmPattern,
@@ -130,6 +138,10 @@ export class RhythmPlayer {
         <div class="player-info" id="player-info">
           <span class="tap-counter">Taps: <span id="tap-count">0</span>/${totalNotes}</span>
           <span class="current-note">Note: <span id="note-number">0</span>/${this.pattern.notes.length}</span>
+          <label class="sustained-notes-label">
+            <input type="checkbox" id="sustained-notes-toggle" ${this.getSustainedNotesEnabled() ? 'checked' : ''}>
+            Sustained notes
+          </label>
         </div>
         
         <div class="progress-bar" id="progress-bar-container">
@@ -151,6 +163,13 @@ export class RhythmPlayer {
     // Restart playback button
     const restartBtn = this.container.querySelector('#restart-playback-btn');
     restartBtn?.addEventListener('click', () => this.restartPlayback());
+
+    // Sustained notes toggle
+    const sustainedToggle = this.container.querySelector('#sustained-notes-toggle');
+    sustainedToggle?.addEventListener('change', (e) => {
+      const enabled = (e.target as HTMLInputElement).checked;
+      this.setSustainedNotesEnabled(enabled);
+    });
 
     const tapButton = this.container.querySelector('#tap-button') as HTMLButtonElement;
     tapButton.addEventListener('click', () => this.handleTap());
@@ -287,6 +306,7 @@ export class RhythmPlayer {
     
     // Schedule pattern sounds (only in practice mode and only on actual notes, not rests or tied notes)
     if (this.practiceMode) {
+      const useSustainedNotes = this.getSustainedNotesEnabled();
       this.pattern.notes.forEach((note, index) => {
         // Check if this note is tied from the previous note
         const previousNote = index > 0 ? this.pattern.notes[index - 1] : null;
@@ -296,7 +316,18 @@ export class RhythmPlayer {
         if (note.type === 'note' && !isTiedFromPrevious) {
           const noteTime = this.noteTimes[index];
           const beatTime = audioContextStartTime + ((countInDuration + noteTime) / 1000);
-          this.audioEngine.playPattern(beatTime);
+          
+          if (useSustainedNotes) {
+            // Calculate actual note duration
+            let noteBeats = beatValues[note.duration];
+            if (note.dotted) {
+              noteBeats *= 1.5;
+            }
+            const noteDurationSeconds = (noteBeats * beatDuration) / 1000;
+            this.audioEngine.playSustainedNote(beatTime, noteDurationSeconds);
+          } else {
+            this.audioEngine.playPattern(beatTime);
+          }
         }
       });
     }

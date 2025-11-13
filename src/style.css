@@ -388,7 +388,27 @@ body {
 .editor-controls {
   display: flex;
   gap: 1rem;
-  margin-bottom: 2rem;
+  margin-bottom: 1rem;
+}
+
+.playback-options {
+  margin-bottom: 1.5rem;
+  text-align: center;
+}
+
+.playback-options label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+  color: #cbd5e1;
+  cursor: pointer;
+}
+
+.playback-options input[type="checkbox"] {
+  cursor: pointer;
+  width: 16px;
+  height: 16px;
 }
 
 .action-btn {
@@ -1312,6 +1332,8 @@ button:hover {
   font-size: 0.85rem;
   color: #999;
   transition: opacity 0.3s, max-height 0.3s;
+  flex-wrap: wrap;
+  align-items: center;
 }
 
 .player-info.hidden {
@@ -1329,6 +1351,19 @@ button:hover {
 .player-info #note-number {
   color: #667eea;
   font-weight: 700;
+}
+
+.sustained-notes-label {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.8rem;
+  color: #999;
+  cursor: pointer;
+}
+
+.sustained-notes-label input[type="checkbox"] {
+  cursor: pointer;
 }
 
 .sheet-music-container {

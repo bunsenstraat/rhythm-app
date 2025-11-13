@@ -122,6 +122,13 @@ export class PatternDesigner {
           <button id="clear-all-btn" class="action-btn">Clear All</button>
         </div>
         
+        <div class="playback-options">
+          <label>
+            <input type="checkbox" id="sustained-notes-toggle" ${this.getSustainedNotesEnabled() ? 'checked' : ''}>
+            Play sustained notes (actual note durations)
+          </label>
+        </div>
+        
         <div class="rhythm-validation" id="rhythm-validation"></div>
         
         <div class="pattern-management">
@@ -279,6 +286,13 @@ export class PatternDesigner {
 
     this.container.querySelector('#stop-pattern-btn')?.addEventListener('click', () => {
       this.stopPattern();
+    });
+
+    // Sustained notes toggle
+    this.container.querySelector('#sustained-notes-toggle')?.addEventListener('change', (e) => {
+      const enabled = (e.target as HTMLInputElement).checked;
+      this.setSustainedNotesEnabled(enabled);
+      Toast.info(enabled ? 'Sustained notes enabled' : 'Sustained notes disabled');
     });
 
     // Clear all button
@@ -516,6 +530,14 @@ export class PatternDesigner {
 
   private playbackTimeout: number | null = null;
 
+  private getSustainedNotesEnabled(): boolean {
+    return localStorage.getItem('sustainedNotesEnabled') === 'true';
+  }
+
+  private setSustainedNotesEnabled(enabled: boolean) {
+    localStorage.setItem('sustainedNotesEnabled', enabled ? 'true' : 'false');
+  }
+
   private async playPattern() {
     if (this.isPlaying) return;
     if (this.pattern.notes.length === 0) {
@@ -586,6 +608,7 @@ export class PatternDesigner {
     }
 
     // Schedule pattern notes (after count-in, skip tied notes)
+    const useSustainedNotes = this.getSustainedNotesEnabled();
     this.pattern.notes.forEach((note, index) => {
       // Check if this note is tied from the previous note
       const previousNote = index > 0 ? this.pattern.notes[index - 1] : null;
@@ -594,7 +617,18 @@ export class PatternDesigner {
       // Play sound only for notes that aren't rests and aren't tied from previous
       if (note.type === 'note' && !isTiedFromPrevious) {
         const beatTime = audioStartTime + ((countInDuration + noteTimes[index]) / 1000);
-        this.audioEngine.playPattern(beatTime);
+        
+        if (useSustainedNotes) {
+          // Calculate actual note duration
+          let noteBeats = beatValues[note.duration];
+          if (note.dotted) {
+            noteBeats *= 1.5;
+          }
+          const noteDurationSeconds = (noteBeats * beatDuration) / 1000;
+          this.audioEngine.playSustainedNote(beatTime, noteDurationSeconds);
+        } else {
+          this.audioEngine.playPattern(beatTime);
+        }
       }
     });
 

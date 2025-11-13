@@ -86,6 +86,32 @@ export class AudioEngine {
     source.start(startTime);
   }
 
+  playSustainedNote(time: number, durationInSeconds: number) {
+    // Play a sustained tone for the exact duration of the note
+    const oscillator = this.audioContext.createOscillator();
+    const gainNode = this.audioContext.createGain();
+    
+    oscillator.connect(gainNode);
+    gainNode.connect(this.audioContext.destination);
+    
+    // Use a pleasant frequency (middle C = 261.63 Hz)
+    oscillator.frequency.value = 440; // A4 note
+    oscillator.type = 'sine';
+    
+    // Set volume with attack and release envelope
+    const attackTime = 0.01; // 10ms attack
+    const releaseTime = 0.05; // 50ms release
+    const sustainLevel = 0.3;
+    
+    gainNode.gain.setValueAtTime(0, time);
+    gainNode.gain.linearRampToValueAtTime(sustainLevel, time + attackTime);
+    gainNode.gain.setValueAtTime(sustainLevel, time + durationInSeconds - releaseTime);
+    gainNode.gain.linearRampToValueAtTime(0, time + durationInSeconds);
+    
+    oscillator.start(time);
+    oscillator.stop(time + durationInSeconds);
+  }
+
   playTap(time?: number) {
     if (!this.tapBuffer) return;
 
