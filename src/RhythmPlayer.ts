@@ -122,23 +122,9 @@ export class RhythmPlayer {
           </div>
         </div>
         
-        <div class="player-controls">
-          <div class="tap-button-container">
-            <button id="tap-button" class="tap-button" ${!this.isPlaying ? 'disabled' : ''}>
-              TAP
-            </button>
-            <button id="restart-playback-btn" class="restart-playback-btn" style="${!this.isPlaying ? 'display: none;' : ''}">
-              🔄
-            </button>
-            <button id="stop-playback-btn" class="stop-playback-btn" style="${!this.isPlaying ? 'display: none;' : ''}">
-              ⏹️
-            </button>
-          </div>
-          
-          <button id="start-playback-btn" class="start-playback-btn" style="${this.isPlaying ? 'display: none;' : ''}">
-            🚀 Start ${modeText}
-          </button>
-        </div>
+        <button id="start-playback-btn" class="start-playback-btn" style="${this.isPlaying ? 'display: none;' : ''}">
+          🚀 Start ${modeText}
+        </button>
         
         <div class="player-info" id="player-info">
           <span class="tap-counter">Taps: <span id="tap-count">0</span>/${totalNotes}</span>
@@ -154,6 +140,20 @@ export class RhythmPlayer {
         </div>
         
         <div class="sheet-music-container" id="sheet-music-player"></div>
+        
+        <div class="player-controls">
+          <div class="tap-button-container">
+            <button id="tap-button" class="tap-button" ${!this.isPlaying ? 'disabled' : ''}>
+              TAP
+            </button>
+            <button id="restart-playback-btn" class="restart-playback-btn" style="${!this.isPlaying ? 'display: none;' : ''}">
+              🔄
+            </button>
+            <button id="stop-playback-btn" class="stop-playback-btn" style="${!this.isPlaying ? 'display: none;' : ''}">
+              ⏹️
+            </button>
+          </div>
+        </div>
       </div>
     `;
 
