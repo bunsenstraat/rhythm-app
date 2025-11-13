@@ -223,6 +223,12 @@ export class RhythmTrainerApp {
   private startPractice() {
     if (!this.pattern) return;
 
+    // Clean up previous player instance to prevent memory leaks
+    if (this.currentPlayer) {
+      this.currentPlayer.destroy();
+      this.currentPlayer = null;
+    }
+
     const main = document.getElementById('app-main')!;
     main.innerHTML = '<div id="player-container"></div>';
 
@@ -247,6 +253,8 @@ export class RhythmTrainerApp {
       tempRenderer.render();
       // This populates tap.noteIndex for all matched taps
       tempRenderer.annotateWithResults({ taps, expectedTaps, totalNotes: expectedTaps.length, tappedNotes: 0, missedNotes: 0, accuracy: 0, score: 0 });
+      // Clean up temporary renderer
+      tempRenderer.destroy();
     }
     
     // NOW calculate results with noteIndex populated
