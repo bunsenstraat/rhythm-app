@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Test Triplet Parsing</title>
+  <script src="https://cdn.jsdelivr.net/npm/abcjs@6.4.0/dist/abcjs-basic-min.js"></script>
+</head>
+<body>
+  <h1>Triplet Parse Test</h1>
+  <pre id="output"></pre>
+  
+  <script>
+    const abc = `X:1
+T:Test
+M:4/4
+L:1/4
+K:C
+(3zCC (3CCC | C C C C |`;
+
+    const output = document.getElementById('output');
+    
+    try {
+      const parsed = ABCJS.parseOnly(abc);
+      console.log('Parsed:', parsed);
+      
+      if (parsed && parsed[0]) {
+        const tune = parsed[0];
+        
+        output.textContent = 'Elements found:\n\n';
+        
+        if (tune.lines) {
+          for (const line of tune.lines) {
+            if (line.staff && line.staff[0] && line.staff[0].voices) {
+              for (const voice of line.staff[0].voices) {
+                voice.forEach((element, i) => {
+                  if (element.el_type === 'note') {
+                    output.textContent += `Element ${i}:\n`;
+                    output.textContent += `  type: ${element.el_type}\n`;
+                    output.textContent += `  duration: ${element.duration}\n`;
+                    output.textContent += `  rest: ${element.rest || false}\n`;
+                    output.textContent += `  startTriplet: ${element.startTriplet || 'undefined'}\n`;
+                    output.textContent += `  triplet: ${element.triplet || 'undefined'}\n`;
+                    output.textContent += `  endTriplet: ${element.endTriplet || 'undefined'}\n`;
+                    output.textContent += `  pitches: ${JSON.stringify(element.pitches)}\n`;
+                    output.textContent += '\n';
+                  }
+                });
+              }
+            }
+          }
+        }
+      }
+    } catch (error) {
+      output.textContent = 'Error: ' + error.message;
+      console.error(error);
+    }
+  </script>
+</body>
+</html>

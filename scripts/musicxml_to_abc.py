@@ -76,18 +76,20 @@ def musicxml_to_abc(musicxml_path: str, output_path: str = None) -> str:
                 element = elements[i]
                 
                 # Check if this starts a triplet (3 notes with same duration in time of 2)
-                if i + 2 < len(elements) and is_triplet_group(elements[i:i+3]):
-                    # Convert triplet group
-                    triplet_notes = []
-                    for triplet_elem in elements[i:i+3]:
-                        abc_note = convert_note_to_abc(triplet_elem, in_triplet=True)
-                        if abc_note:
-                            triplet_notes.append(abc_note)
-                    
-                    if len(triplet_notes) == 3:
-                        notes_line.append(f"(3{''.join(triplet_notes)}")
-                        i += 3
-                        continue
+                if i + 2 < len(elements):
+                    if is_triplet_group(elements[i:i+3]):
+                        # Convert triplet group
+                        triplet_notes = []
+                        for triplet_elem in elements[i:i+3]:
+                            abc_note = convert_note_to_abc(triplet_elem, in_triplet=True)
+                            if abc_note:
+                                triplet_notes.append(abc_note)
+                        
+                        if len(triplet_notes) == 3:
+                            triplet_str = f"(3{''.join(triplet_notes)}"
+                            notes_line.append(triplet_str)
+                            i += 3
+                            continue
                 
                 # Regular note/rest
                 abc_note = convert_note_to_abc(element)
@@ -131,29 +133,31 @@ def is_triplet_group(elements) -> bool:
     if len(elements) != 3:
         return False
     
-    # Check if all three elements have the same quarterLength
-    first_duration = elements[0].quarterLength
-    if not all(elem.quarterLength == first_duration for elem in elements):
+    # All must be notes or rests (no chords or other elements)
+    if not all(isinstance(elem, (note.Note, note.Rest)) for elem in elements):
         return False
     
-    # Check for tuplet marking in music21
-    # Common triplet patterns:
-    # - 3 quarter notes in time of 2 quarters (each is 2/3 of a quarter)
-    # - 3 eighth notes in time of 2 eighths (each is 1/3 of a quarter)
+    # Check if all three elements have the same quarterLength
+    first_duration = elements[0].quarterLength
+    if not all(abs(elem.quarterLength - first_duration) < 0.01 for elem in elements):
+        return False
     
-    # Quarter triplets: each note is 2/3 quarter
-    if abs(first_duration - 2/3) < 0.01:
-        return all(isinstance(elem, (note.Note, note.Rest)) for elem in elements)
-    
-    # Eighth triplets: each note is 1/3 quarter  
-    if abs(first_duration - 1/3) < 0.01:
-        return all(isinstance(elem, (note.Note, note.Rest)) for elem in elements)
-    
-    # Check if elements have tuplet information
+    # Most reliable: Check for tuplet information in music21
     for elem in elements:
-        if hasattr(elem, 'duration') and hasattr(elem.duration, 'tuplets'):
-            if elem.duration.tuplets:
+        if hasattr(elem, 'duration') and hasattr(elem.duration, 'tuplets') and elem.duration.tuplets:
+            tuplet = elem.duration.tuplets[0]
+            # Check if it's a 3:2 tuplet (3 notes in time of 2)
+            if tuplet.numberNotesActual == 3 and tuplet.numberNotesNormal == 2:
                 return True
+    
+    # Fallback: Check for common triplet durations
+    # Quarter triplets: each note is 2/3 quarter (3 quarters in time of 2)
+    if abs(first_duration - 2/3) < 0.01:
+        return True
+    
+    # Eighth triplets: each note is 1/3 quarter (3 eighths in time of 2)
+    if abs(first_duration - 1/3) < 0.01:
+        return True
     
     return False
 

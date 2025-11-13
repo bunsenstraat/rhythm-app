@@ -1223,9 +1223,15 @@ export class PatternDesigner {
       
       // Extract notes from the parsed structure
       if (tune.lines) {
+        console.log('[PatternDesigner ABC Parser] Total lines:', tune.lines.length);
         for (const line of tune.lines) {
           if (line.staff && line.staff[0] && line.staff[0].voices) {
             for (const voice of line.staff[0].voices) {
+              console.log('[PatternDesigner ABC Parser] Voice has', voice.length, 'elements');
+              
+              let inTriplet = false;
+              let tripletCount = 0;
+              
               for (const element of voice) {
                 // Skip bar lines and other non-note elements
                 if (element.el_type === 'bar') continue;
@@ -1238,11 +1244,53 @@ export class PatternDesigner {
                   // Get duration - abcjs uses duration as a fraction of a whole note
                   // 1 = whole, 0.5 = half, 0.25 = quarter, 0.125 = eighth, 0.0625 = sixteenth
                   const abcDuration = element.duration || 0.25;
+                  
+                  // Track triplet state
+                  if (element.startTriplet && typeof element.startTriplet === 'number') {
+                    inTriplet = true;
+                    tripletCount = element.startTriplet; // Usually 3
+                    console.log('[PatternDesigner] Starting triplet group, count:', tripletCount);
+                  }
+                  
+                  // Debug: log triplet elements only
+                  if (element.startTriplet || element.endTriplet || element.tripletMultiplier) {
+                    console.log('[PatternDesigner] TRIPLET element:', {
+                      el_type: element.el_type,
+                      duration: abcDuration,
+                      rest: isRest,
+                      startTriplet: element.startTriplet,
+                      endTriplet: element.endTriplet,
+                      inTriplet,
+                      tripletCount
+                    });
+                  }
+                  
                   let duration: NoteDuration = 'q';
                   let dotted = false;
                   
-                  // Convert ABC duration to our NoteDuration
-                  if (Math.abs(abcDuration - 1.0) < 0.01) {
+                  // Check if this note is part of a triplet group
+                  if (inTriplet && tripletCount > 0) {
+                    console.log('[PatternDesigner] ✓ Note in triplet, duration:', abcDuration);
+                    // Determine triplet type based on the base duration
+                    // Quarter triplets: duration around 0.1667 (2/3 of 0.25)
+                    // Eighth triplets: duration around 0.0833 (1/3 of 0.25)
+                    if (abcDuration >= 0.15) {
+                      duration = 'q3'; // Quarter triplet
+                      console.log('[PatternDesigner] → Set duration to q3 (quarter triplet)');
+                    } else {
+                      duration = '83'; // Eighth triplet
+                      console.log('[PatternDesigner] → Set duration to 83 (eighth triplet)');
+                    }
+                    
+                    tripletCount--;
+                    if (tripletCount === 0) {
+                      inTriplet = false;
+                      console.log('[PatternDesigner] Triplet group complete');
+                    }
+                  } else {
+                    // Regular note duration conversion
+                    // Convert ABC duration to our NoteDuration
+                    if (Math.abs(abcDuration - 1.0) < 0.01) {
                     duration = 'w';
                   } else if (Math.abs(abcDuration - 0.75) < 0.01) {
                     duration = 'h';
@@ -1264,6 +1312,7 @@ export class PatternDesigner {
                     dotted = true;
                   } else if (Math.abs(abcDuration - 0.0625) < 0.01) {
                     duration = '16';
+                  }
                   }
                   
                   // Check for ties - abcjs may store this in different ways
